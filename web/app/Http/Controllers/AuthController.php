@@ -5,14 +5,21 @@ namespace App\Http\Controllers;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    public function register(RegisterRequest $request): Response
+    /**
+     * Example response (201):
+     * {
+     *     "user": {"id": 1, "name": "Jane", "email": "jane@example.com"},
+     *     "token": "<plain-text-token>"
+     * }
+     */
+    public function register(RegisterRequest $request): JsonResponse
     {
         $user = User::create([
             'name' => $request->name,
@@ -28,7 +35,15 @@ class AuthController extends Controller
         ], 201);
     }
 
-    public function login(LoginRequest $request): Response
+    /**
+     * Example response:
+     * {
+     *     "user": {"id": 1, "name": "Jane", "email": "jane@example.com"},
+     *     "token": "<plain-text-token>"
+     * }
+     */
+
+    public function login(LoginRequest $request): JsonResponse
     {
         $credentials = $request->only('email', 'password');
 
@@ -49,7 +64,7 @@ class AuthController extends Controller
         ]);
     }
 
-    public function logout(Request $request): Response
+    public function logout(Request $request): JsonResponse
     {
         $user = $request->user();
 
