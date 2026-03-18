@@ -49,8 +49,6 @@ const AuthForm = ({
             password_confirmation: form.password_confirmation,
           };
 
-    console.log(payload);
-
     onSubmit(payload as RegisterPayload | LoginPayload).catch(() => {});
   };
 
@@ -128,7 +126,7 @@ const AuthForm = ({
         <button
           type="submit"
           disabled={loading}
-          className="w-full flex items-center justify-center py-2 rounded-lg bg-primary text-sm font-semibold uppercase tracking-widest hover:bg-primary/90 transition-all disabled:opacity-60"
+          className="w-full flex items-center justify-center py-2 rounded-lg bg-[#e84c1b] text-sm font-semibold uppercase tracking-widest hover:bg-[#cf3f14] transition-all disabled:opacity-60"
         >
           {loading ? "Working..." : title}
         </button>

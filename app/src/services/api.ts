@@ -84,6 +84,7 @@ const ensureApiBase = (): string => {
   if (!apiBase) {
     throw new Error("Missing VITE_APP_API_BASE environment variable");
   }
+
   return apiBase.replace(/\/+$/, "");
 };
 
@@ -94,6 +95,7 @@ type RequestOpts = {
 const buildHeaders = async (includeAuth = true): Promise<HeadersInit> => {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
+    Accept: "application/json",
   };
 
   if (includeAuth) {

@@ -1,25 +1,38 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const storeMock: Record<string, any> = {
-  get: vi.fn(() => Promise.resolve(null)),
-  set: vi.fn(() => Promise.resolve()),
-  delete: vi.fn(() => Promise.resolve()),
-  save: vi.fn(() => Promise.resolve()),
-};
-
-const loadMock = vi.fn(() => Promise.resolve(storeMock));
-const getMock = vi.fn(() => Promise.resolve(null));
-
-class StoreMock {
-  static load = loadMock;
-  static get = getMock;
+declare global {
+  var __STORE_MOCK: Record<string, any>;
+  var __LOAD_MOCK: ReturnType<typeof vi.fn>;
+  var __GET_MOCK: ReturnType<typeof vi.fn>;
 }
 
-vi.mock("@tauri-apps/plugin-store", () => ({
-  Store: StoreMock,
-}));
+vi.mock("@tauri-apps/plugin-store", () => {
+  const storeMock = {
+    get: vi.fn(() => Promise.resolve(null)),
+    set: vi.fn(() => Promise.resolve()),
+    delete: vi.fn(() => Promise.resolve()),
+    save: vi.fn(() => Promise.resolve()),
+  };
+  const loadMock = vi.fn(() => Promise.resolve(storeMock));
+  const getMock = vi.fn(() => Promise.resolve(null));
+
+  globalThis.__STORE_MOCK = storeMock;
+  globalThis.__LOAD_MOCK = loadMock;
+  globalThis.__GET_MOCK = getMock;
+
+  return {
+    Store: {
+      load: loadMock,
+      get: getMock,
+    },
+  };
+});
 
 import { apiClient, clearToken, getToken, setApiBase, setToken } from "./api";
+
+const storeMock = globalThis.__STORE_MOCK;
+const loadMock = globalThis.__LOAD_MOCK;
+const getMock = globalThis.__GET_MOCK;
 
 setApiBase("https://test.pixend/api/1.0");
 
@@ -97,7 +110,26 @@ describe("apiClient headers", () => {
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining("/workspaces"),
       expect.objectContaining({
-        headers: expect.objectContaining({ Authorization: "Bearer super-secret" }),
+        headers: expect.objectContaining({
+          Authorization: "Bearer super-secret",
+          Accept: "application/json",
+        }),
+      }),
+    );
+  });
+
+  it("always sends Accept application/json", async () => {
+    ensureTauri();
+
+    const fetchMock = mockFetchSuccess({ data: [] });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await apiClient.fetchWorkspaces();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("/workspaces"),
+      expect.objectContaining({
+        headers: expect.objectContaining({ Accept: "application/json" }),
       }),
     );
   });
