@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "app",
+  "productName": "Pixend",
   "version": "0.1.0",
   "identifier": "nl.pixels.pixend",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "app",
+        "title": "Pixend",
         "width": 800,
         "height": 600
       }
