@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PixMan - Project Alpha Documentation</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "background": "#0b1326",
+                        "on-tertiary-fixed": "#2c1700",
+                        "secondary": "#adc6ff",
+                        "secondary-fixed-dim": "#adc6ff",
+                        "on-secondary-fixed-variant": "#004395",
+                        "outline": "#958ea0",
+                        "surface-dim": "#0b1326",
+                        "outline-variant": "#494454",
+                        "surface-tint": "#d0bcff",
+                        "surface-container-highest": "#2d3449",
+                        "on-error": "#690005",
+                        "on-tertiary": "#482900",
+                        "surface-bright": "#31394d",
+                        "on-primary-container": "#340080",
+                        "on-surface": "#dae2fd",
+                        "primary-fixed": "#e9ddff",
+                        "primary-fixed-dim": "#d0bcff",
+                        "surface-container-low": "#131b2e",
+                        "on-primary": "#3c0091",
+                        "inverse-surface": "#dae2fd",
+                        "inverse-on-surface": "#283044",
+                        "secondary-fixed": "#d8e2ff",
+                        "surface-container-high": "#222a3d",
+                        "on-background": "#dae2fd",
+                        "surface": "#0b1326",
+                        "inverse-primary": "#6d3bd7",
+                        "primary": "#d0bcff",
+                        "surface-container-lowest": "#060e20",
+                        "on-primary-fixed-variant": "#5516be",
+                        "on-surface-variant": "#cbc3d7",
+                        "on-tertiary-container": "#3f2300",
+                        "error-container": "#93000a",
+                        "error": "#ffb4ab",
+                        "on-tertiary-fixed-variant": "#673d00",
+                        "tertiary-fixed": "#ffdcbb",
+                        "on-secondary-container": "#e6ecff",
+                        "tertiary": "#ffb869",
+                        "on-secondary-fixed": "#001a42",
+                        "on-primary-fixed": "#23005c",
+                        "primary-container": "#a078ff",
+                        "tertiary-container": "#ca801e",
+                        "surface-container": "#171f33",
+                        "on-error-container": "#ffdad6",
+                        "on-secondary": "#002e6a",
+                        "tertiary-fixed-dim": "#ffb869",
+                        "secondary-container": "#0566d9",
+                        "surface-variant": "#2d3449"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"],
+                        "mono": ["JetBrains Mono"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "0.75rem", "xl": "1rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0b1326; }
+        ::-webkit-scrollbar-thumb { background: #222a3d; border-radius: 10px; }
+        .hero-gradient {
+            background: linear-gradient(135deg, rgba(208, 188, 255, 0.05) 0%, rgba(160, 120, 255, 0.02) 100%);
+        }
+        .cta-gradient {
+            background: linear-gradient(135deg, #d0bcff 0%, #a078ff 100%);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body selection:bg-primary/30">
+<!-- Shell Container -->
+<div class="flex h-screen overflow-hidden">
+<!-- SideNavBar Component -->
+<aside class="hidden md:flex flex-col h-full border-r border-[#494454]/10 bg-[#131b2e] dark:bg-[#131b2e] w-64 flex-shrink-0">
+<!-- Header Section -->
+<div class="p-6 flex flex-col gap-1">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary-container text-sm">architecture</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline font-bold text-sm text-on-surface tracking-tight">Project Alpha</span>
+<span class="font-['Inter'] text-[10px] font-semibold uppercase tracking-widest text-[#dae2fd]/50">Engineering Team</span>
+</div>
+</div>
+<button class="w-full flex items-center justify-center gap-2 py-2.5 rounded bg-surface-container-high text-primary font-['Inter'] text-xs font-semibold uppercase tracking-widest hover:bg-[#222a3d]/50 transition-all active:scale-95">
+<span class="material-symbols-outlined text-sm">add</span>
+                    New Collection
+                </button>
+</div>
+<!-- Navigation Tabs -->
+<nav class="flex-1 px-3 space-y-1">
+<div class="flex items-center gap-3 px-3 py-3 rounded bg-[#222a3d] text-[#d0bcff] border-r-2 border-[#d0bcff] transition-transform translate-x-1 cursor-pointer">
+<span class="material-symbols-outlined text-[20px]" data-icon="folder_open">folder_open</span>
+<span class="font-['Inter'] text-xs font-semibold uppercase tracking-widest">Collections</span>
+</div>
+<div class="flex items-center gap-3 px-3 py-3 rounded text-[#dae2fd]/50 hover:text-[#dae2fd] hover:bg-[#222a3d]/50 transition-all cursor-pointer">
+<span class="material-symbols-outlined text-[20px]" data-icon="api">api</span>
+<span class="font-['Inter'] text-xs font-semibold uppercase tracking-widest">APIs</span>
+</div>
+<div class="flex items-center gap-3 px-3 py-3 rounded text-[#dae2fd]/50 hover:text-[#dae2fd] hover:bg-[#222a3d]/50 transition-all cursor-pointer">
+<span class="material-symbols-outlined text-[20px]" data-icon="cloud_queue">cloud_queue</span>
+<span class="font-['Inter'] text-xs font-semibold uppercase tracking-widest">Environments</span>
+</div>
+<div class="flex items-center gap-3 px-3 py-3 rounded text-[#dae2fd]/50 hover:text-[#dae2fd] hover:bg-[#222a3d]/50 transition-all cursor-pointer">
+<span class="material-symbols-outlined text-[20px]" data-icon="dns">dns</span>
+<span class="font-['Inter'] text-xs font-semibold uppercase tracking-widest">Mock Servers</span>
+</div>
+</nav>
+<!-- Footer Section -->
+<div class="p-3 border-t border-[#494454]/10 flex flex-col gap-1">
+<div class="flex items-center gap-3 px-3 py-3 rounded text-[#dae2fd]/50 hover:text-[#dae2fd] hover:bg-[#222a3d]/50 transition-all cursor-pointer">
+<span class="material-symbols-outlined text-[20px]" data-icon="settings">settings</span>
+<span class="font-['Inter'] text-xs font-semibold uppercase tracking-widest">Settings</span>
+</div>
+<div class="flex items-center gap-3 px-3 py-3 rounded text-[#dae2fd]/50 hover:text-[#dae2fd] hover:bg-[#222a3d]/50 transition-all cursor-pointer">
+<span class="material-symbols-outlined text-[20px]" data-icon="help">help</span>
+<span class="font-['Inter'] text-xs font-semibold uppercase tracking-widest">Help</span>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 flex flex-col h-full bg-surface overflow-y-auto">
+<!-- TopNavBar Component -->
+<header class="sticky top-0 z-50 flex justify-between items-center w-full px-6 h-16 backdrop-blur-xl bg-[#0b1326] bg-opacity-80 border-none transition-all">
+<div class="flex items-center gap-8">
+<span class="text-xl font-black tracking-tighter text-[#d0bcff] uppercase">PixMan</span>
+<nav class="hidden lg:flex items-center gap-6">
+<a class="font-['Inter'] tracking-tight text-sm font-bold text-[#d0bcff] border-b-2 border-[#d0bcff] pb-1" href="#">Workspace</a>
+<a class="font-['Inter'] tracking-tight text-sm font-medium text-[#dae2fd]/60 hover:text-[#dae2fd] transition-colors" href="#">Environments</a>
+<a class="font-['Inter'] tracking-tight text-sm font-medium text-[#dae2fd]/60 hover:text-[#dae2fd] transition-colors" href="#">History</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<button class="p-2 rounded hover:bg-[#222a3d] transition-colors duration-200 text-[#dae2fd]/60">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<button class="p-2 rounded hover:bg-[#222a3d] transition-colors duration-200 text-[#dae2fd]/60">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+</div>
+<button class="bg-primary-container text-on-primary-container px-5 py-1.5 rounded-lg text-sm font-bold active:scale-95 transition-all">
+                        Send
+                    </button>
+</div>
+</header>
+<!-- Hero Section -->
+<section class="hero-gradient px-8 pt-12 pb-16">
+<div class="max-w-5xl mx-auto">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-8">
+<div class="space-y-4 max-w-2xl">
+<div class="flex items-center gap-3">
+<span class="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold tracking-widest uppercase">Collection</span>
+<span class="text-outline-variant text-xs">•</span>
+<span class="text-on-surface-variant text-xs font-mono">v1.0.4</span>
+</div>
+<h1 class="text-5xl font-headline font-black tracking-tighter text-on-surface">Project Alpha API</h1>
+<p class="text-on-surface-variant text-lg leading-relaxed font-light">
+                                Core orchestration endpoints for the Project Alpha infrastructure. This collection manages user lifecycle, cloud resource provisioning, and real-time event streaming for global regions.
+                            </p>
+<div class="flex items-center gap-6 pt-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-lg">description</span>
+<span class="text-sm text-on-surface/80">14 Endpoints</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-lg">update</span>
+<span class="text-sm text-on-surface/80">Updated 2h ago</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-lg">public</span>
+<span class="text-sm text-on-surface/80">Public Access</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-3">
+<button class="cta-gradient text-on-primary px-8 py-4 rounded-xl font-bold flex items-center justify-center gap-3 shadow-2xl shadow-primary/10 hover:brightness-110 active:scale-95 transition-all">
+<span class="material-symbols-outlined">play_arrow</span>
+                                Run Collection
+                            </button>
+<button class="px-8 py-3 rounded-xl border border-outline-variant/30 text-on-surface font-semibold flex items-center justify-center gap-2 hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined text-lg">share</span>
+                                Export Docs
+                            </button>
+</div>
+</div>
+</div>
+</section>
+<!-- Content Section: Bento Documentation -->
+<section class="px-8 py-12 max-w-5xl mx-auto w-full">
+<div class="flex items-center justify-between mb-8">
+<h2 class="text-xs font-headline font-semibold uppercase tracking-[0.2em] text-outline">API Request Catalog</h2>
+<div class="flex items-center gap-2 bg-surface-container-low p-1 rounded-lg">
+<button class="px-3 py-1.5 rounded-md bg-surface-container-high text-primary text-xs font-bold">All</button>
+<button class="px-3 py-1.5 rounded-md text-on-surface-variant text-xs font-medium hover:bg-surface-container-high/50">Core</button>
+<button class="px-3 py-1.5 rounded-md text-on-surface-variant text-xs font-medium hover:bg-surface-container-high/50">Admin</button>
+</div>
+</div>
+<!-- Request Grid -->
+<div class="grid grid-cols-1 gap-6">
+<!-- Premium Request Card 1 -->
+<div class="group relative bg-surface-container-low rounded-xl p-6 hover:bg-surface-container-high transition-all duration-300 border-l-4 border-blue-400">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+<div class="flex-1 space-y-4">
+<div class="flex items-center gap-4">
+<span class="font-mono text-[10px] font-bold tracking-widest px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 uppercase">GET</span>
+<span class="font-mono text-sm text-on-surface-variant">/v1/users/profile</span>
+</div>
+<div>
+<h3 class="text-xl font-bold text-on-surface mb-1">Retrieve User Profile</h3>
+<p class="text-on-surface-variant text-sm leading-relaxed">Returns comprehensive user details including active subscriptions, security preferences, and metadata.</p>
+</div>
+<div class="flex flex-wrap gap-2">
+<span class="px-2 py-0.5 rounded bg-surface-container-highest text-[10px] font-mono text-outline">Auth: Bearer</span>
+<span class="px-2 py-0.5 rounded bg-surface-container-highest text-[10px] font-mono text-outline">Cache: 300s</span>
+</div>
+</div>
+<div class="lg:w-48 flex justify-end">
+<button class="p-3 rounded-full bg-surface-container-highest text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Premium Request Card 2 -->
+<div class="group relative bg-surface-container-low rounded-xl p-6 hover:bg-surface-container-high transition-all duration-300 border-l-4 border-primary">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+<div class="flex-1 space-y-4">
+<div class="flex items-center gap-4">
+<span class="font-mono text-[10px] font-bold tracking-widest px-3 py-1 rounded-full bg-primary/10 text-primary uppercase">POST</span>
+<span class="font-mono text-sm text-on-surface-variant">/v1/resources/provision</span>
+</div>
+<div>
+<h3 class="text-xl font-bold text-on-surface mb-1">Provision Cloud Resource</h3>
+<p class="text-on-surface-variant text-sm leading-relaxed">Initiates an asynchronous workflow to allocate new virtual infrastructure in the specified region.</p>
+</div>
+<div class="flex flex-wrap gap-2">
+<span class="px-2 py-0.5 rounded bg-surface-container-highest text-[10px] font-mono text-outline">Body: JSON</span>
+<span class="px-2 py-0.5 rounded bg-surface-container-highest text-[10px] font-mono text-outline">Priority: High</span>
+</div>
+</div>
+<div class="lg:w-48 flex justify-end">
+<button class="p-3 rounded-full bg-surface-container-highest text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Premium Request Card 3 -->
+<div class="group relative bg-surface-container-low rounded-xl p-6 hover:bg-surface-container-high transition-all duration-300 border-l-4 border-amber-400">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+<div class="flex-1 space-y-4">
+<div class="flex items-center gap-4">
+<span class="font-mono text-[10px] font-bold tracking-widest px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 uppercase">PATCH</span>
+<span class="font-mono text-sm text-on-surface-variant">/v1/settings/network</span>
+</div>
+<div>
+<h3 class="text-xl font-bold text-on-surface mb-1">Update Network Config</h3>
+<p class="text-on-surface-variant text-sm leading-relaxed">Modify existing VPC peering or subnet masks. Requires administrative tier permissions.</p>
+</div>
+<div class="flex flex-wrap gap-2">
+<span class="px-2 py-0.5 rounded bg-surface-container-highest text-[10px] font-mono text-outline">Idempotent</span>
+</div>
+</div>
+<div class="lg:w-48 flex justify-end">
+<button class="p-3 rounded-full bg-surface-container-highest text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Premium Request Card 4 -->
+<div class="group relative bg-surface-container-low rounded-xl p-6 hover:bg-surface-container-high transition-all duration-300 border-l-4 border-error">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+<div class="flex-1 space-y-4">
+<div class="flex items-center gap-4">
+<span class="font-mono text-[10px] font-bold tracking-widest px-3 py-1 rounded-full bg-error/10 text-error uppercase">DELETE</span>
+<span class="font-mono text-sm text-on-surface-variant">/v1/auth/revoke-token</span>
+</div>
+<div>
+<h3 class="text-xl font-bold text-on-surface mb-1">Revoke Access Token</h3>
+<p class="text-on-surface-variant text-sm leading-relaxed">Immediately invalidates the provided Bearer token across all global edge locations.</p>
+</div>
+<div class="flex flex-wrap gap-2">
+<span class="px-2 py-0.5 rounded bg-surface-container-highest text-[10px] font-mono text-outline">Destructive</span>
+</div>
+</div>
+<div class="lg:w-48 flex justify-end">
+<button class="p-3 rounded-full bg-surface-container-highest text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Documentation Footer -->
+<div class="mt-20 pt-12 border-t border-outline-variant/10 flex flex-col md:flex-row items-center justify-between gap-6">
+<div class="flex items-center gap-4">
+<img class="w-12 h-12 rounded-lg object-cover" data-alt="Abstract gradient mesh representing documentation handovers" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDYAbZm-5KDZcyV4VszyuOGQrPrsH7pL8JcNj-8gMnw5tKCjwf2gQPKoFYH3U8CIPu_rzmk2u_YDWvRw5Yhy7lVtpbp25QQpu1hF3UnfbBpELMmQDR7Io-zxvL6GTIpUYmiTqzOQ9-r1GnWTJHePdGIJROlX7K8-URVpCoMRtzoVMBTz8TVpTxkVqSTEjCO3vJkeNuy6g8XLAF24r53viei7IEDh17GmJ4DChsbjNNAGKoFszwq_l35gmKLzZTf2aKpUYrcRhqObDJk"/>
+<div>
+<h4 class="text-sm font-bold text-on-surface">Agency Handover Bundle</h4>
+<p class="text-xs text-on-surface-variant">Ready for production integration</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="text-xs font-bold text-primary hover:underline">Read API Policy</button>
+<span class="text-outline-variant">|</span>
+<button class="text-xs font-bold text-primary hover:underline">Contact Support</button>
+</div>
+</div>
+</section>
+</main>
+<!-- Contextual Info Sidebar (Optional but helps for high-end feel) -->
+<aside class="hidden xl:flex flex-col w-80 bg-surface-container-low border-l border-[#494454]/10 p-8 overflow-y-auto">
+<h2 class="text-xs font-headline font-semibold uppercase tracking-[0.2em] text-outline mb-6">Quick Specs</h2>
+<div class="space-y-8">
+<div>
+<span class="text-[10px] font-bold text-primary/60 uppercase tracking-widest mb-3 block">Base URL</span>
+<div class="p-3 bg-surface-container-lowest rounded-lg font-mono text-[11px] text-on-surface-variant border border-outline-variant/5">
+                        https://api.alpha.pixman.io
+                    </div>
+</div>
+<div>
+<span class="text-[10px] font-bold text-primary/60 uppercase tracking-widest mb-3 block">Authentication</span>
+<p class="text-xs text-on-surface-variant leading-relaxed">
+                        Project Alpha uses Bearer tokens for all requests. Tokens must be generated via the /auth/login endpoint and included in the header of every request.
+                    </p>
+</div>
+<div>
+<span class="text-[10px] font-bold text-primary/60 uppercase tracking-widest mb-3 block">Response Formats</span>
+<div class="space-y-2">
+<div class="flex items-center justify-between text-xs">
+<span class="text-on-surface">JSON</span>
+<span class="text-outline text-[10px]">Default</span>
+</div>
+<div class="flex items-center justify-between text-xs">
+<span class="text-on-surface">Protobuf</span>
+<span class="text-outline text-[10px]">Optional</span>
+</div>
+</div>
+</div>
+<div class="pt-6">
+<div class="bg-surface-container-highest rounded-xl p-5 border border-primary/20">
+<div class="flex items-center gap-2 mb-3">
+<span class="material-symbols-outlined text-primary text-sm">bolt</span>
+<h4 class="text-xs font-bold text-on-surface">Health Status</h4>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-emerald-400"></div>
+<span class="text-[10px] font-medium text-on-surface-variant">All regions operational</span>
+</div>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</body></html>

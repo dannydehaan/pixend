@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom scrollbar for the nocturnal theme */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0b1326; }
+        ::-webkit-scrollbar-thumb { background: #2d3449; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #494454; }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "background": "#0b1326",
+                        "on-tertiary-fixed": "#2c1700",
+                        "secondary": "#adc6ff",
+                        "secondary-fixed-dim": "#adc6ff",
+                        "on-secondary-fixed-variant": "#004395",
+                        "outline": "#958ea0",
+                        "surface-dim": "#0b1326",
+                        "outline-variant": "#494454",
+                        "surface-tint": "#d0bcff",
+                        "surface-container-highest": "#2d3449",
+                        "on-error": "#690005",
+                        "on-tertiary": "#482900",
+                        "surface-bright": "#31394d",
+                        "on-primary-container": "#340080",
+                        "on-surface": "#dae2fd",
+                        "primary-fixed": "#e9ddff",
+                        "primary-fixed-dim": "#d0bcff",
+                        "surface-container-low": "#131b2e",
+                        "on-primary": "#3c0091",
+                        "inverse-surface": "#dae2fd",
+                        "inverse-on-surface": "#283044",
+                        "secondary-fixed": "#d8e2ff",
+                        "surface-container-high": "#222a3d",
+                        "on-background": "#dae2fd",
+                        "surface": "#0b1326",
+                        "inverse-primary": "#6d3bd7",
+                        "primary": "#d0bcff",
+                        "surface-container-lowest": "#060e20",
+                        "on-primary-fixed-variant": "#5516be",
+                        "on-surface-variant": "#cbc3d7",
+                        "on-tertiary-container": "#3f2300",
+                        "error-container": "#93000a",
+                        "error": "#ffb4ab",
+                        "on-tertiary-fixed-variant": "#673d00",
+                        "tertiary-fixed": "#ffdcbb",
+                        "on-secondary-container": "#e6ecff",
+                        "tertiary": "#ffb869",
+                        "on-secondary-fixed": "#001a42",
+                        "on-primary-fixed": "#23005c",
+                        "primary-container": "#a078ff",
+                        "tertiary-container": "#ca801e",
+                        "surface-container": "#171f33",
+                        "on-error-container": "#ffdad6",
+                        "on-secondary": "#002e6a",
+                        "tertiary-fixed-dim": "#ffb869",
+                        "secondary-container": "#0566d9",
+                        "surface-variant": "#2d3449"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-surface text-on-surface h-screen flex flex-col overflow-hidden">
+<!-- TopNavBar -->
+<header class="flex justify-between items-center w-full px-6 h-16 backdrop-blur-xl bg-opacity-80 bg-[#0b1326] z-50 shrink-0">
+<div class="flex items-center gap-8">
+<span class="text-xl font-black tracking-tighter text-[#d0bcff] uppercase">PixMan</span>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-[#d0bcff] font-bold border-b-2 border-[#d0bcff] pb-1 font-['Inter'] tracking-tight text-sm uppercase" href="#">Workspace</a>
+<a class="text-[#dae2fd]/60 font-medium hover:bg-[#222a3d] transition-colors duration-200 px-2 py-1 rounded font-['Inter'] tracking-tight text-sm uppercase" href="#">Environments</a>
+<a class="text-[#dae2fd]/60 font-medium hover:bg-[#222a3d] transition-colors duration-200 px-2 py-1 rounded font-['Inter'] tracking-tight text-sm uppercase" href="#">History</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-2 px-4 py-1.5 bg-gradient-to-br from-primary to-primary-container text-on-primary-container text-xs font-bold rounded-lg hover:opacity-90 transition-all active:scale-95">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">send</span>
+<span>Send</span>
+</button>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<button class="p-2 hover:bg-[#222a3d] rounded-full transition-all">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<button class="p-2 hover:bg-[#222a3d] rounded-full transition-all relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full"></span>
+</button>
+</div>
+</div>
+</header>
+<main class="flex flex-1 overflow-hidden">
+<!-- SideNavBar -->
+<aside class="hidden md:flex flex-col h-full w-64 bg-[#131b2e] border-r border-[#494454]/10 shrink-0">
+<div class="p-4 flex flex-col gap-4">
+<div class="flex items-center justify-between mb-2">
+<div>
+<h2 class="font-['Inter'] text-xs font-semibold uppercase tracking-widest text-[#d0bcff]">Project Alpha</h2>
+<p class="text-[10px] text-on-surface-variant/60 font-medium uppercase tracking-tighter">Engineering Team</p>
+</div>
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center overflow-hidden">
+<img alt="User Profile" data-alt="User avatar placeholder with dark aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDG9yrmrFkupr8JmVGPrXpIHiJBFpzm67bF4uv1yxiMlP2NP7gKfnSFzT308tRM0CG3GqFNGz5JA57osDVTO_2jjoFmr0Yd1sdneaTKQqwgnW-IToJvMxbA7E-u-lUD8XVTXkDTJH0c6POAEonuuvJgO40SewB1Uqsq88WeKx8mxRXJ-Bo2pASCV8r1pwrF9-noWhym00v59cXqIy0yJMlozlGDdIrtTJuJwAXngddldfcgpKOtbF6PkiZ5jH-IMl52Et-zxCXtdyOZ"/>
+</div>
+</div>
+<div class="relative group">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-sm text-on-surface-variant/40">search</span>
+<input class="w-full bg-surface-container-lowest border-none text-xs rounded-lg pl-9 pr-3 py-2.5 focus:ring-1 focus:ring-primary transition-all" placeholder="Search Collections" type="text"/>
+</div>
+<button class="w-full flex items-center justify-center gap-2 py-2.5 bg-surface-container-highest text-[#d0bcff] text-xs font-bold rounded-lg border border-primary/20 hover:bg-primary/10 transition-all">
+<span class="material-symbols-outlined text-sm">add_circle</span>
+<span>New Collection</span>
+</button>
+</div>
+<nav class="flex-1 overflow-y-auto px-2 py-2 space-y-1">
+<div class="bg-[#222a3d] text-[#d0bcff] border-r-2 border-[#d0bcff] flex items-center gap-3 px-3 py-2.5 rounded-l-md transition-transform cursor-pointer">
+<span class="material-symbols-outlined text-lg">folder_open</span>
+<span class="font-['Inter'] text-xs font-semibold uppercase tracking-widest">Collections</span>
+</div>
+<!-- Hierarchical List -->
+<div class="pl-4 mt-2 space-y-2">
+<details class="group" open="">
+<summary class="flex items-center gap-2 text-on-surface-variant/70 hover:text-on-surface cursor-pointer text-[11px] font-bold uppercase transition-colors">
+<span class="material-symbols-outlined text-sm transition-transform group-open:rotate-90">chevron_right</span>
+<span>Auth Service</span>
+</summary>
+<div class="pl-4 mt-1 border-l border-outline-variant/20 space-y-1">
+<div class="flex items-center gap-2 p-1.5 hover:bg-surface-container-high rounded text-[10px] mono text-secondary transition-all cursor-pointer">
+<span class="text-[9px] font-black px-1 rounded bg-secondary/10">POST</span>
+<span>/login</span>
+</div>
+<div class="flex items-center gap-2 p-1.5 hover:bg-surface-container-high rounded text-[10px] mono text-tertiary transition-all cursor-pointer">
+<span class="text-[9px] font-black px-1 rounded bg-tertiary/10">GET</span>
+<span>/session</span>
+</div>
+</div>
+</details>
+<details class="group" open="">
+<summary class="flex items-center gap-2 text-on-surface-variant/70 hover:text-on-surface cursor-pointer text-[11px] font-bold uppercase transition-colors">
+<span class="material-symbols-outlined text-sm transition-transform group-open:rotate-90">chevron_right</span>
+<span>User API</span>
+</summary>
+<div class="pl-4 mt-1 border-l border-outline-variant/20 space-y-1">
+<div class="flex items-center gap-2 p-1.5 bg-primary/10 rounded text-[10px] mono text-primary transition-all cursor-pointer border-r-2 border-primary">
+<span class="text-[9px] font-black px-1 rounded bg-primary/20">GET</span>
+<span>/v1/users/profile</span>
+</div>
+<div class="flex items-center gap-2 p-1.5 hover:bg-surface-container-high rounded text-[10px] mono text-error transition-all cursor-pointer">
+<span class="text-[9px] font-black px-1 rounded bg-error/10">DEL</span>
+<span>/account</span>
+</div>
+</div>
+</details>
+</div>
+<div class="text-[#dae2fd]/50 hover:text-[#dae2fd] hover:bg-[#222a3d]/50 flex items-center gap-3 px-3 py-2.5 rounded transition-all cursor-pointer mt-4">
+<span class="material-symbols-outlined text-lg">api</span>
+<span class="font-['Inter'] text-xs font-semibold uppercase tracking-widest">APIs</span>
+</div>
+<div class="text-[#dae2fd]/50 hover:text-[#dae2fd] hover:bg-[#222a3d]/50 flex items-center gap-3 px-3 py-2.5 rounded transition-all cursor-pointer">
+<span class="material-symbols-outlined text-lg">cloud_queue</span>
+<span class="font-['Inter'] text-xs font-semibold uppercase tracking-widest">Environments</span>
+</div>
+<div class="text-[#dae2fd]/50 hover:text-[#dae2fd] hover:bg-[#222a3d]/50 flex items-center gap-3 px-3 py-2.5 rounded transition-all cursor-pointer">
+<span class="material-symbols-outlined text-lg">dns</span>
+<span class="font-['Inter'] text-xs font-semibold uppercase tracking-widest">Mock Servers</span>
+</div>
+</nav>
+<footer class="p-4 border-t border-[#494454]/10 space-y-1">
+<div class="text-[#dae2fd]/50 hover:text-[#dae2fd] flex items-center gap-3 px-3 py-2 rounded transition-all cursor-pointer">
+<span class="material-symbols-outlined text-lg">settings</span>
+<span class="font-['Inter'] text-xs font-semibold uppercase tracking-widest">Settings</span>
+</div>
+<div class="text-[#dae2fd]/50 hover:text-[#dae2fd] flex items-center gap-3 px-3 py-2 rounded transition-all cursor-pointer">
+<span class="material-symbols-outlined text-lg">help</span>
+<span class="font-['Inter'] text-xs font-semibold uppercase tracking-widest">Help</span>
+</div>
+</footer>
+</aside>
+<!-- Center: API Request Builder -->
+<section class="flex-1 flex flex-col bg-surface min-w-0">
+<!-- Tabs Bar -->
+<div class="flex items-center h-10 bg-surface-container-low px-2 gap-1 border-b border-outline-variant/10 overflow-x-auto no-scrollbar">
+<div class="flex items-center gap-2 px-4 h-full bg-surface border-t-2 border-primary text-primary text-xs font-medium mono whitespace-nowrap">
+<span class="text-[10px] font-black">GET</span>
+<span>/v1/users/profile</span>
+<span class="material-symbols-outlined text-[14px] hover:bg-surface-container-highest rounded-full p-0.5 cursor-pointer">close</span>
+</div>
+<div class="flex items-center gap-2 px-4 h-full text-on-surface-variant/40 text-xs font-medium mono whitespace-nowrap hover:bg-surface-container-high transition-colors cursor-pointer">
+<span class="text-[10px] font-black">POST</span>
+<span>/login</span>
+<span class="material-symbols-outlined text-[14px] opacity-0 group-hover:opacity-100">close</span>
+</div>
+<button class="p-1 hover:bg-surface-container-high rounded text-on-surface-variant/40 ml-2">
+<span class="material-symbols-outlined text-lg">add</span>
+</button>
+</div>
+<!-- URL Bar -->
+<div class="p-6">
+<div class="flex gap-2 items-stretch">
+<div class="relative min-w-[100px]">
+<select class="appearance-none w-full bg-surface-container-high border-none rounded-lg py-3 pl-4 pr-10 text-xs font-black mono text-primary focus:ring-1 focus:ring-primary cursor-pointer">
+<option>GET</option>
+<option>POST</option>
+<option>PUT</option>
+<option>PATCH</option>
+<option>DELETE</option>
+</select>
+<span class="absolute right-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-sm pointer-events-none text-on-surface-variant/40">expand_more</span>
+</div>
+<div class="flex-1 relative">
+<input class="w-full h-full bg-surface-container-high border-none rounded-lg px-4 py-3 text-sm mono text-on-surface focus:ring-1 focus:ring-primary" type="text" value="https://api.pixman.io/v1/users/profile"/>
+</div>
+<button class="px-8 bg-gradient-to-br from-primary to-primary-container text-on-primary-container font-black rounded-lg hover:shadow-[0_0_20px_rgba(208,188,255,0.3)] transition-all active:scale-95">
+                        SEND
+                    </button>
+</div>
+<!-- Inner Tabs -->
+<div class="mt-8">
+<div class="flex border-b border-outline-variant/10 gap-8">
+<button class="pb-3 text-xs font-bold uppercase tracking-widest text-primary border-b-2 border-primary">Params</button>
+<button class="pb-3 text-xs font-bold uppercase tracking-widest text-on-surface-variant/60 hover:text-on-surface">Auth</button>
+<button class="pb-3 text-xs font-bold uppercase tracking-widest text-on-surface-variant/60 hover:text-on-surface">Headers</button>
+<button class="pb-3 text-xs font-bold uppercase tracking-widest text-on-surface-variant/60 hover:text-on-surface relative">
+                            Body
+                            <span class="absolute top-0 -right-2 w-1.5 h-1.5 bg-primary rounded-full"></span>
+</button>
+</div>
+<!-- Params Table -->
+<div class="mt-4 bg-surface-container-lowest rounded-xl overflow-hidden">
+<table class="w-full text-left text-xs mono">
+<thead>
+<tr class="bg-surface-container-high/50 text-on-surface-variant/60 uppercase text-[10px] tracking-widest">
+<th class="px-4 py-3 font-semibold">Key</th>
+<th class="px-4 py-3 font-semibold">Value</th>
+<th class="px-4 py-3 font-semibold">Description</th>
+<th class="w-10"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="border-b border-outline-variant/5">
+<td class="px-4 py-2"><input class="w-full bg-transparent border-none text-primary focus:ring-0 p-0" type="text" value="user_id"/></td>
+<td class="px-4 py-2"><input class="w-full bg-transparent border-none text-on-surface focus:ring-0 p-0" type="text" value="u_928374"/></td>
+<td class="px-4 py-2"><input class="w-full bg-transparent border-none text-on-surface-variant/40 focus:ring-0 p-0 italic" placeholder="Add description..." type="text"/></td>
+<td class="px-4 py-2"><span class="material-symbols-outlined text-sm text-error/40 hover:text-error cursor-pointer">delete</span></td>
+</tr>
+<tr class="opacity-40">
+<td class="px-4 py-2"><input class="w-full bg-transparent border-none focus:ring-0 p-0" placeholder="New key" type="text"/></td>
+<td class="px-4 py-2"><input class="w-full bg-transparent border-none focus:ring-0 p-0" placeholder="New value" type="text"/></td>
+<td class="px-4 py-2"><input class="w-full bg-transparent border-none focus:ring-0 p-0" placeholder="Description" type="text"/></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<!-- Bottom Panel: Response -->
+<div class="flex-1 min-h-0 flex flex-col border-t border-outline-variant/20 bg-surface-container-lowest">
+<div class="flex items-center justify-between px-6 py-3 shrink-0">
+<div class="flex items-center gap-6">
+<span class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Response</span>
+<div class="flex items-center gap-4">
+<span class="flex items-center gap-1.5 px-2.5 py-1 bg-green-500/10 text-green-400 text-[10px] font-black rounded-full border border-green-500/20">
+<span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
+                                200 OK
+                            </span>
+<span class="text-[10px] mono text-on-surface-variant/60 font-medium">142ms</span>
+<span class="text-[10px] mono text-on-surface-variant/60 font-medium">1.2 KB</span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-1.5 text-[10px] font-bold uppercase text-on-surface-variant/60 hover:text-on-surface px-2 py-1 rounded hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined text-sm">content_copy</span>
+                            Copy
+                        </button>
+<button class="flex items-center gap-1.5 text-[10px] font-bold uppercase text-on-surface-variant/60 hover:text-on-surface px-2 py-1 rounded hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined text-sm">download</span>
+                            Save
+                        </button>
+</div>
+</div>
+<div class="flex-1 overflow-hidden p-6 pt-0">
+<div class="w-full h-full bg-[#060e20] rounded-xl border border-outline-variant/10 p-6 overflow-auto scrollbar-thin">
+<pre class="mono text-sm leading-relaxed"><span class="text-secondary">{</span>
+  <span class="text-primary">"status"</span>: <span class="text-tertiary">"success"</span>,
+  <span class="text-primary">"data"</span>: <span class="text-secondary">{</span>
+    <span class="text-primary">"id"</span>: <span class="text-on-tertiary-container">"u_928374"</span>,
+    <span class="text-primary">"username"</span>: <span class="text-tertiary">"architect_dev"</span>,
+    <span class="text-primary">"email"</span>: <span class="text-tertiary">"contact@pixman.io"</span>,
+    <span class="text-primary">"preferences"</span>: <span class="text-secondary">{</span>
+      <span class="text-primary">"theme"</span>: <span class="text-tertiary">"dark_nocturnal"</span>,
+      <span class="text-primary">"notifications"</span>: <span class="text-secondary-container">true</span>
+    <span class="text-secondary">}</span>,
+    <span class="text-primary">"created_at"</span>: <span class="text-tertiary">"2023-11-04T12:00:00Z"</span>
+  <span class="text-secondary">}</span>
+<span class="text-secondary">}</span></pre>
+</div>
+</div>
+</div>
+</section>
+<!-- Right Side: Metadata / Context -->
+<aside class="hidden lg:flex w-72 h-full bg-[#131b2e] border-l border-[#494454]/10 flex-col overflow-y-auto">
+<div class="p-6 space-y-8">
+<div>
+<h3 class="text-[11px] font-bold uppercase tracking-widest text-[#d0bcff] mb-4">Request Context</h3>
+<div class="space-y-4">
+<div class="bg-surface-container-high p-4 rounded-xl">
+<p class="text-[10px] font-medium text-on-surface-variant/60 uppercase mb-2">Environment</p>
+<div class="flex items-center justify-between">
+<span class="text-xs font-bold text-on-surface">Production (AWS-E1)</span>
+<span class="material-symbols-outlined text-sm text-primary">cloud_done</span>
+</div>
+</div>
+<div class="bg-surface-container-high p-4 rounded-xl">
+<p class="text-[10px] font-medium text-on-surface-variant/60 uppercase mb-2">Auth Status</p>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-secondary">verified</span>
+<span class="text-xs font-bold text-on-surface">Bearer Token Active</span>
+</div>
+</div>
+</div>
+</div>
+<div>
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-[11px] font-bold uppercase tracking-widest text-[#d0bcff]">History</h3>
+<span class="text-[10px] text-on-surface-variant/40 hover:text-primary cursor-pointer transition-colors">Clear All</span>
+</div>
+<div class="space-y-2">
+<div class="flex items-center justify-between p-3 bg-surface-container-low hover:bg-surface-container-high rounded-lg cursor-pointer transition-all group">
+<div class="flex items-center gap-3">
+<span class="text-[9px] font-black text-secondary">POST</span>
+<span class="text-[10px] mono text-on-surface-variant">/auth/renew</span>
+</div>
+<span class="text-[9px] text-on-surface-variant/30 group-hover:text-on-surface-variant transition-colors">2m ago</span>
+</div>
+<div class="flex items-center justify-between p-3 bg-surface-container-low hover:bg-surface-container-high rounded-lg cursor-pointer transition-all group">
+<div class="flex items-center gap-3">
+<span class="text-[9px] font-black text-tertiary">GET</span>
+<span class="text-[10px] mono text-on-surface-variant">/v1/metrics</span>
+</div>
+<span class="text-[9px] text-on-surface-variant/30 group-hover:text-on-surface-variant transition-colors">15m ago</span>
+</div>
+<div class="flex items-center justify-between p-3 bg-surface-container-low hover:bg-surface-container-high rounded-lg cursor-pointer transition-all group">
+<div class="flex items-center gap-3">
+<span class="text-[9px] font-black text-error">DEL</span>
+<span class="text-[10px] mono text-on-surface-variant">/temp/cache</span>
+</div>
+<span class="text-[9px] text-on-surface-variant/30 group-hover:text-on-surface-variant transition-colors">1h ago</span>
+</div>
+</div>
+</div>
+<div class="pt-4 border-t border-outline-variant/10">
+<div class="bg-gradient-to-br from-surface-container-high to-surface-container-highest p-4 rounded-xl border border-primary/10">
+<p class="text-[11px] font-bold text-primary uppercase mb-1">Architect Pro</p>
+<p class="text-[10px] text-on-surface-variant/60 leading-relaxed mb-3">Sync your collections across team members in real-time.</p>
+<button class="w-full py-2 bg-primary/10 hover:bg-primary/20 text-primary text-[10px] font-black rounded-lg transition-all">UPGRADE NOW</button>
+</div>
+</div>
+</div>
+</aside>
+</main>
+<!-- Contextual Toast Notification (Pseudo) -->
+<div class="fixed bottom-6 right-6 flex items-center gap-3 bg-surface-container-highest/90 backdrop-blur shadow-2xl px-4 py-3 rounded-xl border border-outline-variant/20 max-w-sm">
+<div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-lg" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div>
+<p class="text-xs font-bold text-on-surface">Request successful</p>
+<p class="text-[10px] text-on-surface-variant/60">Response cached for 300 seconds.</p>
+</div>
+<button class="ml-4 text-on-surface-variant/40 hover:text-on-surface">
+<span class="material-symbols-outlined text-sm">close</span>
+</button>
+</div>
+</body></html>

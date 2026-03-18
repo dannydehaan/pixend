@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PixMan - Environment Manager</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "background": "#0b1326",
+                        "on-tertiary-fixed": "#2c1700",
+                        "secondary": "#adc6ff",
+                        "secondary-fixed-dim": "#adc6ff",
+                        "on-secondary-fixed-variant": "#004395",
+                        "outline": "#958ea0",
+                        "surface-dim": "#0b1326",
+                        "outline-variant": "#494454",
+                        "surface-tint": "#d0bcff",
+                        "surface-container-highest": "#2d3449",
+                        "on-error": "#690005",
+                        "on-tertiary": "#482900",
+                        "surface-bright": "#31394d",
+                        "on-primary-container": "#340080",
+                        "on-surface": "#dae2fd",
+                        "primary-fixed": "#e9ddff",
+                        "primary-fixed-dim": "#d0bcff",
+                        "surface-container-low": "#131b2e",
+                        "on-primary": "#3c0091",
+                        "inverse-surface": "#dae2fd",
+                        "inverse-on-surface": "#283044",
+                        "secondary-fixed": "#d8e2ff",
+                        "surface-container-high": "#222a3d",
+                        "on-background": "#dae2fd",
+                        "surface": "#0b1326",
+                        "inverse-primary": "#6d3bd7",
+                        "primary": "#d0bcff",
+                        "surface-container-lowest": "#060e20",
+                        "on-primary-fixed-variant": "#5516be",
+                        "on-surface-variant": "#cbc3d7",
+                        "on-tertiary-container": "#3f2300",
+                        "error-container": "#93000a",
+                        "error": "#ffb4ab",
+                        "on-tertiary-fixed-variant": "#673d00",
+                        "tertiary-fixed": "#ffdcbb",
+                        "on-secondary-container": "#e6ecff",
+                        "tertiary": "#ffb869",
+                        "on-secondary-fixed": "#001a42",
+                        "on-primary-fixed": "#23005c",
+                        "primary-container": "#a078ff",
+                        "tertiary-container": "#ca801e",
+                        "surface-container": "#171f33",
+                        "on-error-container": "#ffdad6",
+                        "on-secondary": "#002e6a",
+                        "tertiary-fixed-dim": "#ffb869",
+                        "secondary-container": "#0566d9",
+                        "surface-variant": "#2d3449"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"],
+                        "mono": ["JetBrains Mono"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b1326;
+            color: #dae2fd;
+        }
+        .jetbrains-mono { font-family: 'JetBrains Mono', monospace; }
+        .glass-panel {
+            backdrop-filter: blur(12px);
+            background-color: rgba(6, 14, 32, 0.7);
+        }
+    </style>
+</head>
+<body class="overflow-hidden">
+<!-- TopNavBar -->
+<nav class="flex justify-between items-center w-full px-6 h-16 backdrop-blur-xl bg-opacity-80 bg-[#0b1326] dark:bg-[#0b1326] fixed top-0 z-50 border-none">
+<div class="flex items-center gap-8">
+<span class="text-xl font-black tracking-tighter text-[#d0bcff] uppercase">PixMan</span>
+<div class="hidden md:flex items-center gap-6 font-['Inter'] tracking-tight text-sm font-medium">
+<a class="text-[#dae2fd]/60 font-medium hover:bg-[#222a3d] transition-colors duration-200 px-3 py-1 rounded" href="#">Workspace</a>
+<a class="text-[#d0bcff] font-bold border-b-2 border-[#d0bcff] pb-1" href="#">Environments</a>
+<a class="text-[#dae2fd]/60 font-medium hover:bg-[#222a3d] transition-colors duration-200 px-3 py-1 rounded" href="#">History</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<button class="p-2 rounded-full hover:bg-[#222a3d] transition-colors duration-200 text-[#dae2fd]/60">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<button class="p-2 rounded-full hover:bg-[#222a3d] transition-colors duration-200 text-[#dae2fd]/60 relative">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full"></span>
+</button>
+</div>
+<button class="bg-gradient-to-br from-primary to-primary-container text-on-primary px-6 py-2 rounded font-bold text-sm tracking-tight active:scale-95 transition-all">
+                Send
+            </button>
+</div>
+</nav>
+<div class="flex h-screen pt-16">
+<!-- SideNavBar -->
+<aside class="flex flex-col h-full w-64 bg-[#131b2e] dark:bg-[#131b2e] border-r border-[#494454]/10 transition-all duration-300">
+<div class="p-6">
+<div class="flex items-center gap-3 mb-8">
+<div class="w-8 h-8 rounded bg-primary-container flex items-center justify-center text-on-primary-container font-bold text-xs">PA</div>
+<div>
+<div class="text-[10px] font-bold uppercase tracking-widest text-[#dae2fd]/40 leading-none">Project Alpha</div>
+<div class="text-[10px] font-medium text-[#dae2fd]/30">Engineering Team</div>
+</div>
+</div>
+<button class="w-full bg-[#222a3d] border border-[#d0bcff]/20 text-[#d0bcff] py-2 px-4 rounded text-[10px] font-bold uppercase tracking-widest mb-8 hover:bg-[#2d3449] transition-all">
+                    New Collection
+                </button>
+<nav class="space-y-1 font-['Inter'] text-xs font-semibold uppercase tracking-widest">
+<a class="flex items-center gap-3 px-4 py-3 text-[#dae2fd]/50 hover:text-[#dae2fd] hover:bg-[#222a3d]/50 transition-all rounded-lg group" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="folder_open">folder_open</span>
+<span>Collections</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#dae2fd]/50 hover:text-[#dae2fd] hover:bg-[#222a3d]/50 transition-all rounded-lg group" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="api">api</span>
+<span>APIs</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-[#222a3d] text-[#d0bcff] border-r-2 border-[#d0bcff] transition-all translate-x-1" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="cloud_queue">cloud_queue</span>
+<span>Environments</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#dae2fd]/50 hover:text-[#dae2fd] hover:bg-[#222a3d]/50 transition-all rounded-lg group" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="dns">dns</span>
+<span>Mock Servers</span>
+</a>
+</nav>
+</div>
+<div class="mt-auto p-6 space-y-1 font-['Inter'] text-xs font-semibold uppercase tracking-widest">
+<a class="flex items-center gap-3 px-4 py-2 text-[#dae2fd]/50 hover:text-[#dae2fd] transition-all group" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="settings">settings</span>
+<span>Settings</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-[#dae2fd]/50 hover:text-[#dae2fd] transition-all group" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="help">help</span>
+<span>Help</span>
+</a>
+</div>
+</aside>
+<!-- Main Workspace -->
+<main class="flex-1 overflow-hidden flex flex-col bg-[#0b1326]">
+<!-- Environment Header -->
+<div class="px-10 py-8 flex justify-between items-end">
+<div>
+<h1 class="text-display-md text-3xl font-extrabold tracking-tight text-on-surface mb-2">Environment Manager</h1>
+<p class="text-on-surface-variant text-sm max-w-lg">Manage and switch between your global variables across development, staging, and production environments.</p>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative group">
+<label class="block text-[10px] uppercase tracking-widest text-[#dae2fd]/40 font-bold mb-1.5 ml-1">Current Environment</label>
+<select class="appearance-none bg-surface-container-high border-none text-primary font-bold px-4 py-2.5 pr-10 rounded-lg cursor-pointer focus:ring-2 focus:ring-primary/30 transition-all text-sm">
+<option>Development</option>
+<option selected="">Staging</option>
+<option>Production</option>
+</select>
+<span class="material-symbols-outlined absolute bottom-2.5 right-3 pointer-events-none text-primary" data-icon="expand_more">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Content Area -->
+<div class="flex-1 px-10 pb-10 overflow-hidden">
+<div class="h-full bg-surface-container-low rounded-xl flex flex-col overflow-hidden relative">
+<!-- Table Header Controls -->
+<div class="p-6 border-b border-outline-variant/10 flex justify-between items-center bg-surface-container">
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm" data-icon="search">search</span>
+<input class="bg-surface-container-lowest border-none pl-9 pr-4 py-2 rounded-lg text-sm w-64 focus:ring-1 focus:ring-primary-container/40 placeholder:text-outline/50" placeholder="Filter variables..." type="text"/>
+</div>
+<div class="flex items-center gap-2 bg-surface-container-lowest p-1 rounded-lg">
+<button class="px-3 py-1 text-[10px] font-bold rounded-md bg-primary/10 text-primary">All</button>
+<button class="px-3 py-1 text-[10px] font-bold rounded-md text-outline hover:text-on-surface transition-colors">Shared</button>
+<button class="px-3 py-1 text-[10px] font-bold rounded-md text-outline hover:text-on-surface transition-colors">Private</button>
+</div>
+</div>
+<button class="bg-primary text-on-primary px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 hover:brightness-110 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+                            Add New Variable
+                        </button>
+</div>
+<!-- Variable Table -->
+<div class="flex-1 overflow-y-auto">
+<table class="w-full text-left border-collapse">
+<thead class="sticky top-0 bg-surface-container-low z-10">
+<tr class="text-[10px] font-bold uppercase tracking-widest text-[#dae2fd]/40 border-b border-outline-variant/5">
+<th class="px-6 py-4 w-12">
+<input class="rounded bg-surface-container-highest border-none text-primary focus:ring-0" type="checkbox"/>
+</th>
+<th class="px-6 py-4">Key</th>
+<th class="px-6 py-4">Initial Value</th>
+<th class="px-6 py-4">Current Value</th>
+<th class="px-6 py-4 w-32">Type</th>
+<th class="px-6 py-4 w-20"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/5">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-high/40 transition-colors group">
+<td class="px-6 py-4">
+<input class="rounded bg-surface-container-highest border-none text-primary focus:ring-0" type="checkbox"/>
+</td>
+<td class="px-6 py-4">
+<input class="jetbrains-mono bg-transparent border-none p-0 text-sm font-medium text-secondary focus:ring-0 w-full" type="text" value="API_BASE_URL"/>
+</td>
+<td class="px-6 py-4">
+<input class="jetbrains-mono bg-transparent border-none p-0 text-sm text-[#dae2fd]/60 focus:ring-0 w-full" type="text" value="https://staging.pixman.io/v1"/>
+</td>
+<td class="px-6 py-4">
+<input class="jetbrains-mono bg-transparent border-none p-0 text-sm text-[#dae2fd] focus:ring-0 w-full focus:bg-surface-container-lowest focus:px-2 rounded" type="text" value="https://staging.pixman.io/v1"/>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tighter bg-secondary-container/10 text-secondary border border-secondary/20">Secret</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="opacity-0 group-hover:opacity-100 text-outline hover:text-error transition-all">
+<span class="material-symbols-outlined text-lg" data-icon="delete">delete</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-high/40 transition-colors group">
+<td class="px-6 py-4">
+<input class="rounded bg-surface-container-highest border-none text-primary focus:ring-0" type="checkbox"/>
+</td>
+<td class="px-6 py-4">
+<input class="jetbrains-mono bg-transparent border-none p-0 text-sm font-medium text-secondary focus:ring-0 w-full" type="text" value="AUTH_TOKEN"/>
+</td>
+<td class="px-6 py-4">
+<input class="jetbrains-mono bg-transparent border-none p-0 text-sm text-[#dae2fd]/60 focus:ring-0 w-full" type="password" value="sk_test_51MzS2VKA9P"/>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2 group/val">
+<input class="jetbrains-mono bg-transparent border-none p-0 text-sm text-[#dae2fd] focus:ring-0 w-full" type="password" value="sk_test_51MzS2VKA9P"/>
+<button class="material-symbols-outlined text-xs text-outline/40 hover:text-primary transition-colors" data-icon="visibility">visibility</button>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tighter bg-primary-container/10 text-primary border border-primary/20">Secret</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="opacity-0 group-hover:opacity-100 text-outline hover:text-error transition-all">
+<span class="material-symbols-outlined text-lg" data-icon="delete">delete</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-high/40 transition-colors group">
+<td class="px-6 py-4">
+<input class="rounded bg-surface-container-highest border-none text-primary focus:ring-0" type="checkbox"/>
+</td>
+<td class="px-6 py-4">
+<input class="jetbrains-mono bg-transparent border-none p-0 text-sm font-medium text-secondary focus:ring-0 w-full" type="text" value="MAX_RETRY"/>
+</td>
+<td class="px-6 py-4">
+<input class="jetbrains-mono bg-transparent border-none p-0 text-sm text-[#dae2fd]/60 focus:ring-0 w-full" type="text" value="3"/>
+</td>
+<td class="px-6 py-4">
+<input class="jetbrains-mono bg-transparent border-none p-0 text-sm text-[#dae2fd] focus:ring-0 w-full" type="text" value="5"/>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tighter bg-outline-variant/10 text-outline border border-outline-variant/20">Global</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="opacity-0 group-hover:opacity-100 text-outline hover:text-error transition-all">
+<span class="material-symbols-outlined text-lg" data-icon="delete">delete</span>
+</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-container-high/40 transition-colors group">
+<td class="px-6 py-4">
+<input class="rounded bg-surface-container-highest border-none text-primary focus:ring-0" type="checkbox"/>
+</td>
+<td class="px-6 py-4">
+<input class="jetbrains-mono bg-transparent border-none p-0 text-sm font-medium text-secondary focus:ring-0 w-full" type="text" value="LOG_LEVEL"/>
+</td>
+<td class="px-6 py-4">
+<input class="jetbrains-mono bg-transparent border-none p-0 text-sm text-[#dae2fd]/60 focus:ring-0 w-full" type="text" value="INFO"/>
+</td>
+<td class="px-6 py-4">
+<input class="jetbrains-mono bg-transparent border-none p-0 text-sm text-[#dae2fd] focus:ring-0 w-full" type="text" value="DEBUG"/>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tighter bg-outline-variant/10 text-outline border border-outline-variant/20">Global</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="opacity-0 group-hover:opacity-100 text-outline hover:text-error transition-all">
+<span class="material-symbols-outlined text-lg" data-icon="delete">delete</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Environment Info Panel (Glassmorphism Sidebar) -->
+<div class="absolute right-0 top-0 bottom-0 w-80 glass-panel border-l border-outline-variant/10 p-8 transform translate-x-full lg:translate-x-0 transition-transform">
+<h3 class="text-xs font-black uppercase tracking-widest text-primary mb-6">Environment Settings</h3>
+<div class="space-y-6">
+<div>
+<label class="block text-[10px] font-bold text-outline uppercase tracking-widest mb-2">Sync Initial Values</label>
+<div class="flex items-center justify-between p-3 bg-surface-container-highest rounded-lg">
+<span class="text-xs text-on-surface">Auto-sync with Team</span>
+<div class="w-10 h-5 bg-primary/20 rounded-full relative flex items-center px-1 cursor-pointer">
+<div class="w-3.5 h-3.5 bg-primary rounded-full transform translate-x-4"></div>
+</div>
+</div>
+</div>
+<div>
+<label class="block text-[10px] font-bold text-outline uppercase tracking-widest mb-2">Accessibility</label>
+<div class="flex items-center justify-between p-3 bg-surface-container-highest rounded-lg">
+<span class="text-xs text-on-surface">Private Environment</span>
+<div class="w-10 h-5 bg-surface-container-lowest border border-outline-variant/30 rounded-full relative flex items-center px-1 cursor-pointer">
+<div class="w-3.5 h-3.5 bg-outline rounded-full"></div>
+</div>
+</div>
+<p class="text-[10px] text-outline/50 mt-2 italic">When active, values are only stored locally on your machine.</p>
+</div>
+<div class="pt-6 border-t border-outline-variant/10">
+<label class="block text-[10px] font-bold text-outline uppercase tracking-widest mb-3">Inherited From</label>
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-sm text-secondary" data-icon="link">link</span>
+<span class="text-xs text-secondary font-medium">Global Constants</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-outline" data-icon="link_off">link_off</span>
+<span class="text-xs text-outline font-medium">AWS Secret Manager</span>
+</div>
+</div>
+</div>
+<div class="absolute bottom-8 left-8 right-8">
+<button class="w-full py-3 bg-error/10 hover:bg-error/20 text-error border border-error/20 rounded-lg text-xs font-bold transition-all">
+                                Delete Environment
+                            </button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Background Decoration -->
+<div class="fixed top-0 left-0 w-full h-full pointer-events-none -z-10 overflow-hidden">
+<div class="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-primary/5 blur-[120px] rounded-full"></div>
+<div class="absolute bottom-[-10%] left-[-5%] w-[30%] h-[30%] bg-secondary/5 blur-[100px] rounded-full"></div>
+</div>
+</body></html>

@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PixMan - Request History &amp; Snippets</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "background": "#0b1326",
+              "on-tertiary-fixed": "#2c1700",
+              "secondary": "#adc6ff",
+              "secondary-fixed-dim": "#adc6ff",
+              "on-secondary-fixed-variant": "#004395",
+              "outline": "#958ea0",
+              "surface-dim": "#0b1326",
+              "outline-variant": "#494454",
+              "surface-tint": "#d0bcff",
+              "surface-container-highest": "#2d3449",
+              "on-error": "#690005",
+              "on-tertiary": "#482900",
+              "surface-bright": "#31394d",
+              "on-primary-container": "#340080",
+              "on-surface": "#dae2fd",
+              "primary-fixed": "#e9ddff",
+              "primary-fixed-dim": "#d0bcff",
+              "surface-container-low": "#131b2e",
+              "on-primary": "#3c0091",
+              "inverse-surface": "#dae2fd",
+              "inverse-on-surface": "#283044",
+              "secondary-fixed": "#d8e2ff",
+              "surface-container-high": "#222a3d",
+              "on-background": "#dae2fd",
+              "surface": "#0b1326",
+              "inverse-primary": "#6d3bd7",
+              "primary": "#d0bcff",
+              "surface-container-lowest": "#060e20",
+              "on-primary-fixed-variant": "#5516be",
+              "on-surface-variant": "#cbc3d7",
+              "on-tertiary-container": "#3f2300",
+              "error-container": "#93000a",
+              "error": "#ffb4ab",
+              "on-tertiary-fixed-variant": "#673d00",
+              "tertiary-fixed": "#ffdcbb",
+              "on-secondary-container": "#e6ecff",
+              "tertiary": "#ffb869",
+              "on-secondary-fixed": "#001a42",
+              "on-primary-fixed": "#23005c",
+              "primary-container": "#a078ff",
+              "tertiary-container": "#ca801e",
+              "surface-container": "#171f33",
+              "on-error-container": "#ffdad6",
+              "on-secondary": "#002e6a",
+              "tertiary-fixed-dim": "#ffb869",
+              "secondary-container": "#0566d9",
+              "surface-variant": "#2d3449"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"],
+              "mono": ["JetBrains Mono"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        body {
+            background-color: #0b1326;
+            color: #dae2fd;
+            font-family: 'Inter', sans-serif;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .glass-effect {
+            backdrop-filter: blur(12px);
+            background-color: rgba(6, 14, 32, 0.7);
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+<!-- TopNavBar -->
+<header class="flex justify-between items-center w-full px-6 h-16 backdrop-blur-xl bg-opacity-80 bg-[#0b1326] dark:bg-[#0b1326] border-none bg-[#131b2e] sticky top-0 z-50">
+<div class="flex items-center gap-8">
+<span class="text-xl font-black tracking-tighter text-[#d0bcff] uppercase">PixMan</span>
+<nav class="hidden md:flex gap-6 items-center">
+<a class="text-[#dae2fd]/60 font-medium font-['Inter'] tracking-tight text-sm hover:bg-[#222a3d] transition-colors duration-200 px-3 py-1 rounded" href="#">Workspace</a>
+<a class="text-[#dae2fd]/60 font-medium font-['Inter'] tracking-tight text-sm hover:bg-[#222a3d] transition-colors duration-200 px-3 py-1 rounded" href="#">Environments</a>
+<a class="text-[#d0bcff] font-bold border-b-2 border-[#d0bcff] pb-1 font-['Inter'] tracking-tight text-sm" href="#">History</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<button class="p-2 text-[#dae2fd]/60 hover:bg-[#222a3d] rounded-full transition-all">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<button class="p-2 text-[#dae2fd]/60 hover:bg-[#222a3d] rounded-full transition-all">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+<button class="bg-gradient-to-br from-primary to-primary-container text-on-primary-container px-5 py-1.5 rounded font-semibold text-sm hover:opacity-90 active:scale-95 transition-all">
+                Send
+            </button>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- SideNavBar -->
+<aside class="flex flex-col h-full border-r border-[#494454]/10 bg-[#131b2e] dark:bg-[#131b2e] w-64 shrink-0">
+<div class="p-6">
+<div class="flex items-center gap-3 mb-8">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">analytics</span>
+</div>
+<div>
+<h3 class="text-on-surface font-bold text-sm leading-tight">Project Alpha</h3>
+<p class="text-on-surface-variant text-[10px] uppercase tracking-widest font-semibold">Engineering Team</p>
+</div>
+</div>
+<button class="w-full py-3 px-4 bg-surface-container-high text-primary rounded-lg font-['Inter'] text-xs font-semibold uppercase tracking-widest flex items-center justify-center gap-2 border border-outline-variant/10 hover:bg-surface-container-highest transition-all mb-8">
+<span class="material-symbols-outlined text-sm">add</span>
+                    New Collection
+                </button>
+<nav class="space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-[#dae2fd]/50 hover:text-[#dae2fd] hover:bg-[#222a3d]/50 transition-all font-['Inter'] text-xs font-semibold uppercase tracking-widest group" href="#">
+<span class="material-symbols-outlined text-lg">folder_open</span>
+                        Collections
+                    </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#dae2fd]/50 hover:text-[#dae2fd] hover:bg-[#222a3d]/50 transition-all font-['Inter'] text-xs font-semibold uppercase tracking-widest group" href="#">
+<span class="material-symbols-outlined text-lg">api</span>
+                        APIs
+                    </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#dae2fd]/50 hover:text-[#dae2fd] hover:bg-[#222a3d]/50 transition-all font-['Inter'] text-xs font-semibold uppercase tracking-widest group" href="#">
+<span class="material-symbols-outlined text-lg">cloud_queue</span>
+                        Environments
+                    </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#dae2fd]/50 hover:text-[#dae2fd] hover:bg-[#222a3d]/50 transition-all font-['Inter'] text-xs font-semibold uppercase tracking-widest group" href="#">
+<span class="material-symbols-outlined text-lg">dns</span>
+                        Mock Servers
+                    </a>
+</nav>
+</div>
+<div class="mt-auto p-6 space-y-1 border-t border-outline-variant/5">
+<a class="flex items-center gap-3 px-4 py-2 text-[#dae2fd]/50 hover:text-[#dae2fd] font-['Inter'] text-xs font-semibold uppercase tracking-widest" href="#">
+<span class="material-symbols-outlined text-lg">settings</span>
+                    Settings
+                </a>
+<a class="flex items-center gap-3 px-4 py-2 text-[#dae2fd]/50 hover:text-[#dae2fd] font-['Inter'] text-xs font-semibold uppercase tracking-widest" href="#">
+<span class="material-symbols-outlined text-lg">help</span>
+                    Help
+                </a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex overflow-hidden bg-surface">
+<!-- Left Column: Request History -->
+<section class="w-2/5 flex flex-col border-r border-outline-variant/5 bg-surface-container-low">
+<div class="p-6 border-b border-outline-variant/5 flex justify-between items-center">
+<h2 class="text-on-surface font-bold text-lg tracking-tight">Request History</h2>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">filter_list</span>
+</button>
+</div>
+<div class="flex-1 overflow-y-auto no-scrollbar">
+<!-- History Timeline -->
+<div class="flex flex-col">
+<!-- History Item 1: Active -->
+<div class="px-6 py-5 bg-surface-container-high border-l-4 border-primary transition-all cursor-pointer">
+<div class="flex justify-between items-start mb-2">
+<span class="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase">POST</span>
+<span class="text-on-surface-variant font-mono text-[10px]">14:23:45</span>
+</div>
+<h4 class="text-on-surface font-mono text-sm truncate mb-3">/v1/auth/provision-token</h4>
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-1.5">
+<div class="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>
+<span class="text-emerald-400 text-xs font-bold">200 OK</span>
+</div>
+<span class="text-on-surface-variant/40 text-xs">•</span>
+<span class="text-on-surface-variant text-xs">124ms</span>
+</div>
+</div>
+<!-- History Item 2 -->
+<div class="px-6 py-5 hover:bg-surface-container-high/50 transition-all cursor-pointer border-l-4 border-transparent">
+<div class="flex justify-between items-start mb-2">
+<span class="bg-blue-400/10 text-blue-400 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase">GET</span>
+<span class="text-on-surface-variant font-mono text-[10px]">14:20:12</span>
+</div>
+<h4 class="text-on-surface font-mono text-sm truncate mb-3">/v1/users/me/profile</h4>
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-1.5">
+<div class="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>
+<span class="text-emerald-400 text-xs font-bold">200 OK</span>
+</div>
+<span class="text-on-surface-variant/40 text-xs">•</span>
+<span class="text-on-surface-variant text-xs">45ms</span>
+</div>
+</div>
+<!-- History Item 3 -->
+<div class="px-6 py-5 hover:bg-surface-container-high/50 transition-all cursor-pointer border-l-4 border-transparent">
+<div class="flex justify-between items-start mb-2">
+<span class="bg-purple-400/10 text-purple-400 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase">PATCH</span>
+<span class="text-on-surface-variant font-mono text-[10px]">13:45:00</span>
+</div>
+<h4 class="text-on-surface font-mono text-sm truncate mb-3">/v1/billing/subscription/update</h4>
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-1.5">
+<div class="w-1.5 h-1.5 rounded-full bg-amber-400"></div>
+<span class="text-amber-400 text-xs font-bold">403 Forbidden</span>
+</div>
+<span class="text-on-surface-variant/40 text-xs">•</span>
+<span class="text-on-surface-variant text-xs">289ms</span>
+</div>
+</div>
+<!-- History Item 4 -->
+<div class="px-6 py-5 hover:bg-surface-container-high/50 transition-all cursor-pointer border-l-4 border-transparent">
+<div class="flex justify-between items-start mb-2">
+<span class="bg-red-400/10 text-red-400 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase">DELETE</span>
+<span class="text-on-surface-variant font-mono text-[10px]">Yesterday</span>
+</div>
+<h4 class="text-on-surface font-mono text-sm truncate mb-3">/v1/projects/alpha-test-01</h4>
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-1.5">
+<div class="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>
+<span class="text-emerald-400 text-xs font-bold">204 No Content</span>
+</div>
+<span class="text-on-surface-variant/40 text-xs">•</span>
+<span class="text-on-surface-variant text-xs">512ms</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Right Column: Code Snippet Generator -->
+<section class="flex-1 flex flex-col bg-surface p-8 relative">
+<div class="mb-10">
+<div class="flex justify-between items-end mb-6">
+<div>
+<p class="text-primary font-bold text-[10px] uppercase tracking-widest mb-1">Developer Tools</p>
+<h1 class="text-3xl font-extrabold text-on-surface tracking-tight">Code Snippets</h1>
+</div>
+<div class="flex bg-surface-container-low p-1 rounded-lg">
+<button class="px-4 py-1.5 rounded-md text-xs font-bold bg-primary text-on-primary-container shadow-lg transition-all">cURL</button>
+<button class="px-4 py-1.5 rounded-md text-xs font-bold text-on-surface-variant hover:text-on-surface transition-all">JavaScript</button>
+<button class="px-4 py-1.5 rounded-md text-xs font-bold text-on-surface-variant hover:text-on-surface transition-all">Python</button>
+<button class="px-4 py-1.5 rounded-md text-xs font-bold text-on-surface-variant hover:text-on-surface transition-all">Go</button>
+</div>
+</div>
+<div class="grid grid-cols-12 gap-6 mb-8">
+<!-- Request Details Overview (Bento Style) -->
+<div class="col-span-8 p-6 rounded-xl bg-surface-container-low border border-outline-variant/5 flex flex-col gap-4">
+<div class="flex items-center justify-between border-b border-outline-variant/10 pb-4">
+<span class="text-on-surface-variant text-xs font-medium">Target URL</span>
+<span class="text-primary font-mono text-xs">https://api.pixman.io/v1/auth/provision-token</span>
+</div>
+<div class="grid grid-cols-3 gap-4">
+<div>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant/60 font-bold mb-1">Method</p>
+<p class="text-on-surface font-mono text-sm">POST</p>
+</div>
+<div>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant/60 font-bold mb-1">Auth Type</p>
+<p class="text-on-surface font-mono text-sm">Bearer Token</p>
+</div>
+<div>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant/60 font-bold mb-1">Timeout</p>
+<p class="text-on-surface font-mono text-sm">30000ms</p>
+</div>
+</div>
+</div>
+<!-- Meta Stats Card -->
+<div class="col-span-4 p-6 rounded-xl bg-gradient-to-br from-surface-container-high to-surface-container-low border border-outline-variant/5 flex flex-col justify-center">
+<div class="flex items-center gap-3 mb-2">
+<span class="material-symbols-outlined text-primary-fixed-dim">speed</span>
+<span class="text-on-surface font-bold text-xl">124ms</span>
+</div>
+<p class="text-on-surface-variant text-[10px] uppercase tracking-widest font-bold">Average Latency</p>
+</div>
+</div>
+</div>
+<!-- Monaco-Style Editor -->
+<div class="flex-1 flex flex-col rounded-xl overflow-hidden bg-surface-container-lowest border border-outline-variant/10 relative group shadow-2xl">
+<div class="h-10 bg-surface-container-highest/30 flex items-center justify-between px-4 border-b border-outline-variant/5">
+<div class="flex gap-2">
+<div class="w-3 h-3 rounded-full bg-[#ff5f56]"></div>
+<div class="w-3 h-3 rounded-full bg-[#ffbd2e]"></div>
+<div class="w-3 h-3 rounded-full bg-[#27c93f]"></div>
+</div>
+<div class="text-[10px] text-on-surface-variant/60 font-mono tracking-tight">request.sh — cURL</div>
+<button class="flex items-center gap-1.5 text-xs text-primary hover:text-primary-container transition-colors font-bold group">
+<span class="material-symbols-outlined text-sm">content_copy</span>
+                            Copy
+                        </button>
+</div>
+<div class="flex-1 p-6 font-mono text-sm leading-relaxed overflow-auto no-scrollbar">
+<div class="flex gap-4">
+<div class="text-on-surface-variant/20 text-right select-none w-6">
+                                1<br/>2<br/>3<br/>4<br/>5<br/>6<br/>7<br/>8<br/>9<br/>10<br/>11
+                            </div>
+<div class="text-on-surface whitespace-pre">
+<span class="text-secondary">curl</span> <span class="text-on-tertiary-container">--location</span> <span class="text-secondary">'https://api.pixman.io/v1/auth/provision-token'</span> \
+<span class="text-on-tertiary-container">--header</span> <span class="text-secondary">'Content-Type: application/json'</span> \
+<span class="text-on-tertiary-container">--header</span> <span class="text-secondary">'Authorization: Bearer {{ACCESS_TOKEN}}'</span> \
+<span class="text-on-tertiary-container">--data-raw</span> <span class="text-secondary">'{
+    "client_id": "px-882910-alpha",
+    "scope": "read:projects write:deployments",
+    "environment": "production",
+    "ttl": 3600
+}'</span></div>
+</div>
+</div>
+<!-- Visual Accent Gradient Overlay -->
+<div class="absolute bottom-0 right-0 w-64 h-64 bg-primary/5 blur-[120px] pointer-events-none"></div>
+</div>
+<!-- Floating Bottom Actions (Contextual Only) -->
+<div class="mt-6 flex justify-end gap-3">
+<button class="px-6 py-2 rounded-lg text-xs font-bold text-on-surface-variant border border-outline-variant/20 hover:bg-surface-container-high transition-all">
+                        Open in Postman
+                    </button>
+<button class="px-6 py-2 rounded-lg text-xs font-bold bg-primary-fixed-dim text-on-primary-fixed hover:opacity-90 transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">bolt</span>
+                        Run in Sandbox
+                    </button>
+</div>
+</section>
+</main>
+</div>
+<!-- Decorative Elements -->
+<div class="fixed top-0 right-0 w-1/2 h-full pointer-events-none opacity-20 overflow-hidden">
+<div class="absolute -top-24 -right-24 w-96 h-96 bg-primary blur-[160px] rounded-full"></div>
+</div>
+</body></html>
