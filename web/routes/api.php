@@ -9,6 +9,9 @@ Route::prefix('1.0')->group(function () {
     Route::post('auth/register', [AuthController::class, 'register']);
     Route::post('auth/login', [AuthController::class, 'login']);
     Route::post('auth/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+    Route::get('ping', function () {
+        return ['pong' => true];
+    });
 
     Route::middleware('auth:sanctum')->get('status', function (Request $request) {
         return [
