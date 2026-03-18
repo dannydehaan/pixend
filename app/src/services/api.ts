@@ -131,7 +131,9 @@ const request = async <T>(
 
   if (!response.ok) {
     const message = body?.message || "Request failed";
-    throw new Error(message);
+    const error = new Error(message) as Error & { status?: number };
+    error.status = response.status;
+    throw error;
   }
 
   return body as T;
@@ -205,5 +207,11 @@ export const apiClient = {
 
   clearToken() {
     return clearToken();
+  },
+
+  validateToken() {
+    return request<{ user: UserSummary }>("/auth/me", {
+      method: "GET",
+    });
   },
 };
