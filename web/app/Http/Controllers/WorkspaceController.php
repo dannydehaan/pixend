@@ -13,7 +13,7 @@ class WorkspaceController extends Controller
 {
     public function index(Request $request): AnonymousResourceCollection
     {
-        $workspaces = $request->user()->workspaces()->with('users')->get();
+        $workspaces = $request->user()->workspaces()->with(['users', 'collections.environments'])->get();
 
         return WorkspaceResource::collection($workspaces);
     }

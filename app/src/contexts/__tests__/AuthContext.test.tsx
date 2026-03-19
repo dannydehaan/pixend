@@ -33,6 +33,7 @@ vi.mock("../../services/api", () => {
 
   return {
     apiClient: mockApiClient,
+    setUnauthorizedHandler: vi.fn(),
   };
 });
 

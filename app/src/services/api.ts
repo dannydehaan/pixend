@@ -93,6 +93,7 @@ type RequestOpts = {
   dedupeKey?: string;
   signal?: AbortSignal;
   force?: boolean;
+  skipUnauthorizedHandler?: boolean;
 };
 
 const buildHeaders = async (includeAuth = true): Promise<HeadersInit> => {
@@ -114,6 +115,12 @@ const buildHeaders = async (includeAuth = true): Promise<HeadersInit> => {
 };
 
 const pendingRequests = new Map<string, Promise<unknown>>();
+
+type UnauthorizedHandler = () => Promise<void>;
+let unauthorizedHandler: UnauthorizedHandler | null = null;
+export const setUnauthorizedHandler = (handler: UnauthorizedHandler | null) => {
+  unauthorizedHandler = handler;
+};
 
 const createRequestKey = (path: string, init: RequestInit, opts: RequestOpts): string => {
   const method = (init.method ?? "GET").toUpperCase();
@@ -151,9 +158,19 @@ const request = async <T>(
     const body = contentType?.includes("application/json") ? await response.json() : null;
 
     if (!response.ok) {
+      if (response.status === 401 && !opts.skipUnauthorizedHandler && unauthorizedHandler) {
+        await unauthorizedHandler();
+      }
+
       const message = body?.message || "Request failed";
-      const error = new Error(message) as Error & { status?: number };
+      const error = new Error(message) as Error & {
+        status?: number;
+        details?: Record<string, string[]>;
+      };
       error.status = response.status;
+      if (body && typeof body === "object" && "errors" in body) {
+        error.details = (body as { errors?: Record<string, string[]> }).errors ?? undefined;
+      }
       throw error;
     }
 
@@ -177,6 +194,28 @@ export type UserSummary = {
   email: string;
 };
 
+export type Environment = {
+  id: number;
+  collection_id: number;
+  name: string;
+  region: string | null;
+  description: string | null;
+  settings: Record<string, unknown> | null;
+  created_at: string;
+};
+
+export type Collection = {
+  id: number;
+  workspace_id: number;
+  name: string;
+  description: string | null;
+  endpoint_count: number;
+  status: string;
+  access_level: string;
+  created_at: string;
+  environments?: Environment[];
+};
+
 export type Workspace = {
   id: number;
   name: string;
@@ -185,6 +224,7 @@ export type Workspace = {
   created_at: string;
   updated_at: string;
   users?: UserSummary[];
+  collections?: Collection[];
 };
 
 export type CollectionOverviewEndpoint = {
@@ -228,6 +268,20 @@ export type RegisterPayload = {
 export type LoginPayload = {
   email: string;
   password: string;
+};
+
+export type CreateCollectionPayload = {
+  name: string;
+  workspace_id: number;
+  description?: string;
+};
+
+export type CreateEnvironmentPayload = {
+  collection_id: number;
+  name: string;
+  region?: string;
+  description?: string;
+  settings?: Record<string, unknown>;
 };
 
 export type AuthResponse = {
@@ -282,6 +336,26 @@ export const apiClient = {
     ).then((data) => data.data);
   },
 
+  createCollection(payload: CreateCollectionPayload) {
+    return request<{ data: Collection }>(
+      "/collections",
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      },
+    ).then((data) => data.data);
+  },
+
+  createEnvironment(payload: CreateEnvironmentPayload) {
+    return request<{ data: Environment }>(
+      "/environments",
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      },
+    ).then((data) => data.data);
+  },
+
   getPersistedToken() {
     return getToken();
   },
@@ -300,6 +374,7 @@ export const apiClient = {
     }, {
       dedupeKey: "GET:/auth/me",
       signal: options?.signal,
+      skipUnauthorizedHandler: true,
     });
   },
 };

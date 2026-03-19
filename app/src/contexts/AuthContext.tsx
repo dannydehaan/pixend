@@ -5,6 +5,7 @@ import {
   LoginPayload,
   RegisterPayload,
   UserSummary,
+  setUnauthorizedHandler,
 } from "../services/api";
 
 export type AuthStatus = "loading" | "authenticated" | "unauthenticated";
@@ -212,6 +213,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       runValidation({ force: true, abortPrevious: options?.abortPrevious ?? true }),
     [runValidation],
   );
+
+  useEffect(() => {
+    setUnauthorizedHandler(handleInvalidToken);
+    return () => {
+      setUnauthorizedHandler(null);
+    };
+  }, [handleInvalidToken]);
 
   const isLoading = status === "loading";
   const isAuthenticated = status === "authenticated";
