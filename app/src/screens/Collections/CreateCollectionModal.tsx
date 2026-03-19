@@ -12,19 +12,21 @@ export const CreateCollectionModal = ({ open, onClose, onSuccess }: Props) => {
   const { workspaces } = useWorkspaces();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [workspaceId, setWorkspaceId] = useState<number | null>(workspaces[0]?.id ?? null);
+  const [workspaceId, setWorkspaceId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [globalError, setGlobalError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (open) {
-      setWorkspaceId(workspaces[0]?.id ?? null);
-      setName("");
-      setDescription("");
-      setGlobalError(null);
-      setFieldErrors({});
+    if (!open) {
+      return;
     }
+
+    setWorkspaceId(workspaces[0]?.id ?? null);
+    setName("");
+    setDescription("");
+    setGlobalError(null);
+    setFieldErrors({});
   }, [open, workspaces]);
 
   const workspaceOptions = useMemo(() => workspaces, [workspaces]);
