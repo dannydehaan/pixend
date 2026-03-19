@@ -1,17 +1,27 @@
-import { Navigate, Outlet, Route, Routes } from "react-router-dom";
+import { Navigate, Outlet, Route, Routes, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { CollectionsScreen } from "../screens/Collections/CollectionsScreen";
 import { LoginScreen } from "../screens/Login/LoginScreen";
 
 const ProtectedRoute = () => {
   const { user, status, isGuest } = useAuth();
+  const navigate = useNavigate();
+
+  const shouldRedirect = !isGuest && (status === "unauthenticated" || !user);
+
+  useEffect(() => {
+    if (shouldRedirect) {
+      navigate("/login", { replace: true });
+    }
+  }, [shouldRedirect, navigate]);
 
   if (status === "loading") {
     return <div className="text-center text-sm text-on-surface-variant">Validating session...</div>;
   }
 
-  if (!isGuest && (status === "unauthenticated" || !user)) {
-    return <Navigate to="/login" replace />;
+  if (shouldRedirect) {
+    return null;
   }
 
   return <Outlet />;

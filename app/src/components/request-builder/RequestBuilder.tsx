@@ -3,12 +3,61 @@ import MethodSelector from "./MethodSelector";
 import RequestTabs, { type TabOption } from "./RequestTabs";
 import UrlInput from "./UrlInput";
 
-const defaultMethods = ["GET", "POST", "PUT", "PATCH", "DELETE"];
+const defaultMethods = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
 
 const RequestBuilder = () => {
   const [selectedMethod, setSelectedMethod] = useState<string>("GET");
   const [endpoint, setEndpoint] = useState<string>("https://api.pixend.io/v1/users/profile");
   const [activeTab, setActiveTab] = useState<TabOption>("Params");
+  const [requestBody] = useState<string>("{ \"example\": \"payload\" }");
+  const [responseStatus, setResponseStatus] = useState<number | null>(null);
+  const [responseHeaders, setResponseHeaders] = useState<Record<string, string>>({});
+  const [responseText, setResponseText] = useState<string>("");
+
+  const handleSend = async () => {
+    try {
+      setResponseStatus(null);
+      setResponseText("");
+
+      const method = selectedMethod.toUpperCase();
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      };
+
+      const init: RequestInit = {
+        method,
+        headers,
+      };
+
+      const shouldAttachBody = ["POST", "PUT", "PATCH"].includes(method) || (method === "DELETE" && requestBody.trim());
+
+      if (shouldAttachBody) {
+        init.body = requestBody;
+      }
+
+      const response = await fetch(endpoint, init);
+      setResponseStatus(response.status);
+
+      const headersObj: Record<string, string> = {};
+      response.headers.forEach((value, key) => {
+        headersObj[key] = value;
+      });
+      setResponseHeaders(headersObj);
+
+      if (method !== "HEAD") {
+        const payload = await response.text();
+        setResponseText(payload);
+      } else {
+        setResponseText("");
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown request error";
+      setResponseStatus(null);
+      setResponseHeaders({});
+      setResponseText(message);
+    }
+  };
 
   return (
     <div className="bg-surface text-on-surface h-screen flex flex-col overflow-hidden">
@@ -160,7 +209,11 @@ const RequestBuilder = () => {
             <div className="flex gap-2 items-stretch">
               <MethodSelector methods={defaultMethods} value={selectedMethod} onChange={setSelectedMethod} />
               <UrlInput value={endpoint} onChange={setEndpoint} />
-              <button className="px-8 bg-gradient-to-br from-primary to-primary-container text-on-primary-container font-black rounded-lg hover:shadow-[0_0_20px_rgba(208,188,255,0.3)] transition-all active:scale-95" type="button">
+              <button
+                onClick={handleSend}
+                className="px-8 bg-gradient-to-br from-primary to-primary-container text-on-primary-container font-black rounded-lg hover:shadow-[0_0_20px_rgba(208,188,255,0.3)] transition-all active:scale-95"
+                type="button"
+              >
                 SEND
               </button>
             </div>
@@ -169,33 +222,31 @@ const RequestBuilder = () => {
           </div>
 
           <div className="flex-1 min-h-0 flex flex-col border-t border-outline-variant/20 bg-surface-container-lowest">
-            <div className="flex items-center justify-between px-6 py-3 shrink-0">
+            <div className="flex flex-col gap-2 px-6 py-3 shrink-0">
               <div className="flex items-center gap-6">
                 <span className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Response</span>
-                <div className="flex items-center gap-4">
-                  <span className="flex items-center gap-1.5 px-2.5 py-1 bg-green-500/10 text-green-400 text-[10px] font-black rounded-full border border-green-500/20">
-                    <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
-                    200 OK
-                  </span>
-                  <span className="text-[10px] mono text-on-surface-variant/60 font-medium">142ms</span>
-                  <span className="text-[10px] mono text-on-surface-variant/60 font-medium">1.2 KB</span>
-                </div>
+                <span className="text-[10px] mono text-on-surface-variant/60 font-medium">Status: {responseStatus ?? "pending"}</span>
               </div>
-              <div className="flex items-center gap-3">
-                <button className="flex items-center gap-1.5 text-[10px] font-bold uppercase text-on-surface-variant/60 hover:text-on-surface px-2 py-1 rounded hover:bg-surface-container-high transition-all" type="button">
-                  <span className="material-symbols-outlined text-sm">content_copy</span>
-                  Copy
-                </button>
-                <button className="flex items-center gap-1.5 text-[10px] font-bold uppercase text-on-surface-variant/60 hover:text-on-surface px-2 py-1 rounded hover:bg-surface-container-high transition-all" type="button">
-                  <span className="material-symbols-outlined text-sm">download</span>
-                  Save
-                </button>
+              <div>
+                <span className="text-[10px] mono text-on-surface-variant/60">Headers</span>
+                <div className="mt-1 space-y-1 text-[10px] text-on-surface">
+                  {Object.entries(responseHeaders).length ? (
+                    Object.entries(responseHeaders).map(([key, value]) => (
+                      <div key={key} className="flex gap-2">
+                        <span className="font-semibold text-primary">{key}:</span>
+                        <span>{value}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-on-surface-variant/50">No headers</p>
+                  )}
+                </div>
               </div>
             </div>
             <div className="flex-1 overflow-hidden p-6 pt-0">
               <div className="w-full h-full bg-[#060e20] rounded-xl border border-outline-variant/10 p-6 overflow-auto scrollbar-thin">
                 <pre className="mono text-sm leading-relaxed">
-{`{\n  "status": "success",\n  "data": {\n    "id": "u_928374",\n    "username": "architect_dev",\n    "email": "contact@pixend.io",\n    "preferences": {\n      "theme": "dark_nocturnal",\n      "notifications": true\n    },\n    "created_at": "2023-11-04T12:00:00Z"\n  }\n}`}
+{responseText || "No response yet."}
                 </pre>
               </div>
             </div>

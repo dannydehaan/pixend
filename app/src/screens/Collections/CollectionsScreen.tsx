@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useWorkspaces } from "../../contexts/WorkspaceContext";
 import { Collection } from "../../services/api";
@@ -19,7 +20,8 @@ const formatRelativeUpdated = (timestamp?: string) => {
 };
 
 export const CollectionsScreen = () => {
-  const { status, isGuest } = useAuth();
+  const navigate = useNavigate();
+  const { status, isGuest, logout, user } = useAuth();
   const { workspaces, loading, error, refresh } = useWorkspaces();
   const [isCreatingCollection, setIsCreatingCollection] = useState(false);
   const [activeCollection, setActiveCollection] = useState<Collection | null>(null);
@@ -32,6 +34,8 @@ export const CollectionsScreen = () => {
   const heroCollection = collections[0];
   const workspaceTypeLabel = useMemo(() => workspaces[0]?.type?.name ?? "Workspace", [workspaces]);
   const totalEndpoints = heroCollection?.endpoint_count ?? 0;
+
+  const workspaceLimitReached = Boolean(!user?.is_premium && workspaces.length >= 1 && !isGuest);
 
   const connectionState = useMemo(() => {
     if (status === "loading") return "Connecting...";
@@ -117,9 +121,20 @@ export const CollectionsScreen = () => {
                 <span className="material-symbols-outlined">notifications</span>
               </button>
             </div>
-            <button className="bg-primary-container text-on-primary-container px-5 py-1.5 rounded-lg text-sm font-bold active:scale-95 transition-all">
-              Send
-            </button>
+            <div className="flex items-center gap-2">
+              {isGuest && (
+                <button
+                  type="button"
+                  onClick={() => navigate("/login", { replace: true })}
+                  className="px-5 py-1.5 rounded-lg border border-[#494454]/70 text-xs uppercase tracking-[0.3em] text-[#e84c1b] hover:border-[#e84c1b]"
+                >
+                  Login / Upgrade
+                </button>
+              )}
+              <button className="bg-primary-container text-on-primary-container px-5 py-1.5 rounded-lg text-sm font-bold active:scale-95 transition-all">
+                Send
+              </button>
+            </div>
           </div>
         </header>
         <section className="hero-gradient px-8 pt-12 pb-16">
@@ -164,6 +179,23 @@ export const CollectionsScreen = () => {
                   <span className="material-symbols-outlined">playlist_add</span>
                   New Collection
                 </button>
+                <button
+                  type="button"
+                  disabled={workspaceLimitReached}
+                  className={`px-8 py-3 rounded-xl border flex items-center justify-center gap-2 font-semibold transition-all ${
+                    workspaceLimitReached
+                      ? "border-[#494454]/40 text-[#dae2fd]/50"
+                      : "border-outline-variant/30 text-on-surface hover:bg-surface-container-high"
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-lg">workspace_premium</span>
+                  Create Workspace
+                </button>
+                {workspaceLimitReached && (
+                  <p className="text-xs text-[#f6bc35] uppercase tracking-[0.3em]">
+                    Upgrade to premium to create more workspaces
+                  </p>
+                )}
                 <button className="px-8 py-3 rounded-xl border border-outline-variant/30 text-on-surface font-semibold flex items-center justify-center gap-2 hover:bg-surface-container-high transition-all">
                   <span className="material-symbols-outlined text-lg">share</span>
                   Export Docs

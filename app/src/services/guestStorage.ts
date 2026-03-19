@@ -1,5 +1,5 @@
 import { Store } from "@tauri-apps/plugin-store";
-import { Collection, Environment, Workspace, WorkspaceType } from "./api";
+import type { Collection, Environment, Workspace, WorkspaceType } from "./api";
 
 const DATA_STORE_NAME = "guest-workspace";
 const DATA_KEY = "data";

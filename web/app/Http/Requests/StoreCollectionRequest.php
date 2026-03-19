@@ -2,7 +2,8 @@
 
 namespace App\Http\Requests;
 
-use App\Services\WorkspaceAccessService;
+use App\Models\Collection;
+use App\Models\Workspace;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -20,13 +21,13 @@ class StoreCollectionRequest extends FormRequest
             return false;
         }
 
-        try {
-            app(WorkspaceAccessService::class)->resolveWorkspaceForUser($workspaceId, $this->user());
-        } catch (\Throwable) {
+        $workspace = Workspace::with('users')->find($workspaceId);
+
+        if (! $workspace) {
             return false;
         }
 
-        return true;
+        return $this->user()->can('create', [Collection::class, $workspace]);
     }
 
     public function rules(): array

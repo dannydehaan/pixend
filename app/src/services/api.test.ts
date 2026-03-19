@@ -55,7 +55,11 @@ const mockFetchSuccess = (data: unknown) =>
   vi.fn(() =>
     Promise.resolve({
       ok: true,
-      headers: { get: () => "application/json" },
+      status: 200,
+      headers: {
+        get: () => "application/json",
+        forEach: (cb: (value: string, key: string) => void) => cb("application/json", "content-type"),
+      },
       json: () => Promise.resolve(data),
     }),
   );

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -24,6 +25,27 @@ it('allows a user to register via API', function () {
         ]);
 
     $this->assertDatabaseHas('users', ['email' => 'jane@example.com']);
+    $this->assertDatabaseHas('workspaces', ['owner_id' => $response->json('user.id')]);
+});
+
+it('creates a personal workspace for new users and prevents duplicates', function () {
+    $payload = [
+        'name' => 'Sam Taylor',
+        'email' => 'sam@example.com',
+        'password' => 'secret123!',
+        'password_confirmation' => 'secret123!',
+    ];
+
+    $first = $this->postJson('/api/1.0/auth/register', $payload);
+    $first->assertStatus(201);
+
+    $workspace = Workspace::where('owner_id', $first->json('user.id'))->first();
+    expect($workspace)->not->toBeNull();
+
+    $second = $this->postJson('/api/1.0/auth/register', $payload);
+    $second->assertStatus(422);
+
+    expect(Workspace::where('owner_id', $first->json('user.id'))->count())->toBe(1);
 });
 
 it('returns a token when logging in with valid credentials', function () {

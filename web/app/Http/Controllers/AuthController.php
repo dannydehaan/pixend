@@ -6,10 +6,13 @@ use App\Http\Resources\UserResource;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Models\User;
+use App\Models\Workspace;
+use App\Models\WorkspaceType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -27,6 +30,35 @@ class AuthController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
+
+        $workspaceType = WorkspaceType::firstWhere('slug', WorkspaceType::PREMIUM) ?? WorkspaceType::getDefaultType();
+
+        $existing = $user->workspaces()
+            ->where('owner_id', $user->id)
+            ->where('type', WorkspaceType::PREMIUM)
+            ->first();
+
+        if ($existing) {
+            $token = $user->createToken('api-token')->plainTextToken;
+
+            return response()->json([
+                'user' => $user,
+                'token' => $token,
+            ], 201);
+        }
+
+        $workspace = Workspace::create([
+            'name' => $user->name . "'s Workspace",
+            'slug' => Str::slug($user->name . ' workspace-' . uniqid()),
+            'description' => 'Personal workspace for ' . $user->name,
+            'type' => WorkspaceType::PREMIUM,
+            'workspace_type_id' => $workspaceType->id,
+            'owner_id' => $user->id,
+            'organization_id' => null,
+            'sync_enabled' => true,
+        ]);
+
+        $user->workspaces()->attach($workspace);
 
         $token = $user->createToken('api-token')->plainTextToken;
 

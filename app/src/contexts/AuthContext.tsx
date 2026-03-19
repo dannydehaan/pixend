@@ -74,6 +74,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setToken(null);
     setUser(null);
     setStatus("unauthenticated");
+    setIsGuest(false);
+    setGuestMode(false);
   }, []);
 
   const redirectToLogin = useCallback(() => {
@@ -101,6 +103,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(result.user);
       setStatus("authenticated");
       navigate("/collections", { replace: true });
+      window.dispatchEvent(new Event("pixend:refresh-workspaces"));
     },
     [navigate],
   );

@@ -37,6 +37,11 @@ class User extends Authenticatable
         return $this->belongsToMany(Workspace::class);
     }
 
+    public function ownedWorkspaces(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Workspace::class, 'owner_id');
+    }
+
     public function organizations(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
         return $this->belongsToMany(Organization::class);

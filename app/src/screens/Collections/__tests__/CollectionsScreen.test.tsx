@@ -6,6 +6,7 @@ import { workspaceFactory } from "./fixtures";
 import { apiClient } from "../../../services/api";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useWorkspaces } from "../../../contexts/WorkspaceContext";
+import { MemoryRouter } from "react-router-dom";
 
 vi.mock("../../../contexts/AuthContext", () => ({
   useAuth: vi.fn(),
@@ -50,6 +51,7 @@ describe("CollectionsScreen", () => {
       loading: false,
       error: null,
       refresh: refreshMock,
+      addCollectionToWorkspace: vi.fn(),
     });
   });
 
@@ -60,7 +62,11 @@ describe("CollectionsScreen", () => {
   it("creates a collection and refreshes workspaces", async () => {
     mockedApiClient.createCollection.mockResolvedValue({} as any);
 
-    render(<CollectionsScreen />);
+    render(
+      <MemoryRouter>
+        <CollectionsScreen />
+      </MemoryRouter>,
+    );
 
     const [createButton] = screen.getAllByRole("button", { name: /New Collection/i });
     fireEvent.click(createButton);
@@ -86,7 +92,11 @@ describe("CollectionsScreen", () => {
   it("creates an environment for the selected collection", async () => {
     mockedApiClient.createEnvironment.mockResolvedValue({} as any);
 
-    render(<CollectionsScreen />);
+    render(
+      <MemoryRouter>
+        <CollectionsScreen />
+      </MemoryRouter>,
+    );
 
     const environmentButton = screen.getByRole("button", { name: /New Environment/i });
     fireEvent.click(environmentButton);
@@ -111,7 +121,11 @@ describe("CollectionsScreen", () => {
     validationError.details = { name: ["Name is required"] };
     mockedApiClient.createCollection.mockRejectedValue(validationError);
 
-    render(<CollectionsScreen />);
+    render(
+      <MemoryRouter>
+        <CollectionsScreen />
+      </MemoryRouter>,
+    );
 
     fireEvent.click(screen.getAllByRole("button", { name: /New Collection/i })[0]);
     fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Project Beta" } });

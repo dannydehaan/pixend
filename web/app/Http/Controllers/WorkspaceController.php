@@ -40,9 +40,15 @@ class WorkspaceController extends Controller
         }
 
         if ($typeKey === WorkspaceType::PREMIUM && ! $request->user()->is_premium) {
-            throw ValidationException::withMessages([
-                'type' => 'Premium workspaces require a premium account.',
-            ]);
+            $existingPersonal = Workspace::where('owner_id', $request->user()->id)
+                ->whereNull('organization_id')
+                ->where('type', WorkspaceType::PREMIUM)
+                ->count();
+            if ($existingPersonal >= 1) {
+                throw ValidationException::withMessages([
+                    'type' => 'Free users can create only one personal workspace. Upgrade to create more.',
+                ]);
+            }
         }
 
         $workspaceData = [

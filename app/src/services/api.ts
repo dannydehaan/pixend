@@ -1,5 +1,6 @@
 import { Store } from "@tauri-apps/plugin-store";
 import { isGuestMode } from "./guestSession";
+import { addGuestCollection } from "./guestStorage";
 
 let apiBaseOverride: string | null = null;
 export const setApiBase = (value: string) => {
@@ -104,6 +105,9 @@ const buildHeaders = async (includeAuth = true): Promise<HeadersInit> => {
   };
 
   if (includeAuth) {
+    if (isGuestMode()) {
+      return headers;
+    }
     const token = await getToken();
     if (!token) {
       throw new Error("Missing authentication token");
@@ -128,16 +132,20 @@ const createRequestKey = (path: string, init: RequestInit, opts: RequestOpts): s
   return opts.dedupeKey ?? `${method}:${path}`;
 };
 
+const isAbsoluteUrl = (value: string) => /^(?:[a-z]+:)?\/\//i.test(value);
+
 const request = async <T>(
   path: string,
   init: RequestInit = {},
   opts: RequestOpts = {},
-): Promise<T> => {
-  if (isGuestMode()) {
-    throw new Error("Guest mode disables API requests");
+): Promise<{ status: number; headers: Record<string, string>; body: T | string | null }> => {
+  const isExternal = isAbsoluteUrl(path);
+  if (isGuestMode() && !isExternal) {
+    throw new Error("Guest mode prevents internal Pixend API requests");
   }
   const includeAuth = opts.auth ?? true;
   const apiBase = ensureApiBase();
+  const fullPath = isAbsoluteUrl(path) ? path : `${apiBase}${path}`;
   const key = createRequestKey(path, init, opts);
 
   if (!opts.force && pendingRequests.has(key)) {
@@ -149,7 +157,7 @@ const request = async <T>(
   const headers = await buildHeaders(includeAuth);
 
   const fetchPromise = (async () => {
-    const response = await fetch(`${apiBase}${path}`, {
+    const response = await fetch(fullPath, {
       ...init,
       headers: {
         ...headers,
@@ -158,15 +166,25 @@ const request = async <T>(
       signal,
     });
 
+    const headersObj: Record<string, string> = {};
+    response.headers.forEach((value, key) => {
+      headersObj[key] = value;
+    });
+
     const contentType = response.headers.get("content-type");
-    const body = contentType?.includes("application/json") ? await response.json() : null;
+    let body: T | string | null = null;
+    if (contentType?.includes("application/json")) {
+      body = await response.json();
+    } else if (contentType) {
+      body = (await response.text()) as string;
+    }
 
     if (!response.ok) {
       if (response.status === 401 && !opts.skipUnauthorizedHandler && unauthorizedHandler) {
         await unauthorizedHandler();
       }
 
-      const message = body?.message || "Request failed";
+      const message = (body && typeof body === "object" ? (body as any).message : null) || "Request failed";
       const error = new Error(message) as Error & {
         status?: number;
         details?: Record<string, string[]>;
@@ -178,7 +196,11 @@ const request = async <T>(
       throw error;
     }
 
-    return body as T;
+    return {
+      status: response.status,
+      headers: headersObj,
+      body,
+    };
   })();
 
   pendingRequests.set(key, fetchPromise);
@@ -196,6 +218,7 @@ export type UserSummary = {
   id: number;
   name: string;
   email: string;
+  is_premium?: boolean;
 };
 
 export type WorkspaceType = {
@@ -309,8 +332,8 @@ export type AuthResponse = {
 };
 
 export const apiClient = {
-  register(payload: RegisterPayload) {
-    return request<AuthResponse>(
+  async register(payload: RegisterPayload) {
+    const response = await request<AuthResponse>(
       "/auth/register",
       {
         method: "POST",
@@ -318,10 +341,11 @@ export const apiClient = {
       },
       { auth: false },
     );
+    return response.body as AuthResponse;
   },
 
-  login(payload: LoginPayload) {
-    return request<AuthResponse>(
+  async login(payload: LoginPayload) {
+    const response = await request<AuthResponse>(
       "/auth/login",
       {
         method: "POST",
@@ -329,10 +353,11 @@ export const apiClient = {
       },
       { auth: false },
     );
+    return response.body as AuthResponse;
   },
 
-  logout() {
-    return request<void>(
+  async logout() {
+    await request<void>(
       "/auth/logout",
       {
         method: "POST",
@@ -340,39 +365,48 @@ export const apiClient = {
     );
   },
 
-  fetchCollectionOverview() {
-    return request<{ data: CollectionOverviewResponse }>(
-      "/collections/overview",
-      { method: "GET" },
-    ).then((data) => data.data);
+  async fetchCollectionOverview() {
+    const response = await request<{ data: CollectionOverviewResponse }>("/collections/overview", { method: "GET" });
+    return response.body?.data as CollectionOverviewResponse;
   },
 
-  fetchWorkspaces(options?: { signal?: AbortSignal }) {
-    return request<{ data: Workspace[] }>(
+  async fetchWorkspaces(options?: { signal?: AbortSignal }) {
+    const response = await request<{ data: Workspace[] }>(
       "/workspaces",
       { method: "GET" },
       { signal: options?.signal },
-    ).then((data) => data.data);
+    );
+    return response.body?.data as Workspace[];
   },
 
-  createCollection(payload: CreateCollectionPayload) {
-    return request<{ data: Collection }>(
+  async createCollection(payload: CreateCollectionPayload) {
+    if (isGuestMode()) {
+      const collection = await addGuestCollection({
+        workspaceId: payload.workspace_id,
+        name: payload.name,
+        description: payload.description,
+      });
+      return collection;
+    }
+    const response = await request<{ data: Collection }>(
       "/collections",
       {
         method: "POST",
         body: JSON.stringify(payload),
       },
-    ).then((data) => data.data);
+    );
+    return response.body?.data as Collection;
   },
 
-  createEnvironment(payload: CreateEnvironmentPayload) {
-    return request<{ data: Environment }>(
+  async createEnvironment(payload: CreateEnvironmentPayload) {
+    const response = await request<{ data: Environment }>(
       "/environments",
       {
         method: "POST",
         body: JSON.stringify(payload),
       },
-    ).then((data) => data.data);
+    );
+    return response.body?.data as Environment;
   },
 
   getPersistedToken() {
@@ -387,15 +421,17 @@ export const apiClient = {
     return clearToken();
   },
 
-  validateToken(options?: { signal?: AbortSignal }) {
-    return request<{ user: UserSummary }>("/auth/me", {
+  async validateToken(options?: { signal?: AbortSignal }) {
+    const response = await request<{ user: UserSummary }>("/auth/me", {
       method: "GET",
     }, {
       dedupeKey: "GET:/auth/me",
       signal: options?.signal,
       skipUnauthorizedHandler: true,
     });
+    return response.body as { user: UserSummary };
   },
 };
 
 export type ApiClient = typeof apiClient;
+export { request };

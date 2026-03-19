@@ -11,12 +11,17 @@ class WorkspaceAccessService
 {
     public function ensureAccess(Workspace $workspace, ?User $user = null, bool $requiresWrite = false): void
     {
-        if ($workspace->isLocal()) {
+        if ($workspace->isLocal() && ! $user) {
             return;
         }
 
         if (! $user) {
             throw new AuthorizationException('Authentication is required to access this workspace.');
+        }
+
+        if ($workspace->isLocal()) {
+            $this->ensureMembership($workspace, $user);
+            return;
         }
 
         if ($workspace->isPremium() && $requiresWrite && ! $user->is_premium) {
@@ -30,15 +35,32 @@ class WorkspaceAccessService
                 throw new AuthorizationException('This workspace is not linked to an organization.');
             }
 
-            if (! $organization->users()->where('users.id', $user->id)->exists()) {
-                throw new AuthorizationException('You must be part of the organization to access this workspace.');
+            if (
+                $user->is($workspace->owner) ||
+                $organization->users()->where('users.id', $user->id)->exists()
+            ) {
+                return;
             }
+
+            throw new AuthorizationException('You must be part of the organization to access this workspace.');
+        }
+
+        if ($workspace->owner_id === $user->id) {
+            return;
+        }
+
+        if ($workspace->users()->where('users.id', $user->id)->exists()) {
+            return;
+        }
+
+        if ($workspace->organization_id && $user->organizations()->where('organization_id', $workspace->organization_id)->exists()) {
+            return;
         }
     }
 
     public function ensureMembership(Workspace $workspace, ?User $user): void
     {
-        if ($workspace->isLocal()) {
+        if ($workspace->isLocal() && ! $user) {
             return;
         }
 

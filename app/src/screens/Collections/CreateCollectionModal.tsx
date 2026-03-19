@@ -11,7 +11,7 @@ type Props = {
 };
 
 export const CreateCollectionModal = ({ open, onClose, onSuccess }: Props) => {
-  const { workspaces } = useWorkspaces();
+  const { workspaces, addCollectionToWorkspace } = useWorkspaces();
   const { isGuest } = useAuth();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -52,16 +52,18 @@ export const CreateCollectionModal = ({ open, onClose, onSuccess }: Props) => {
       workspace_id: workspaceId,
     };
 
+    console.log("Submit Create Collection payload", payload);
+
     try {
-      if (isGuest) {
-        await addGuestCollection({
-          workspaceId,
-          name: payload.name,
-          description: payload.description,
-        });
-      } else {
-        await apiClient.createCollection(payload);
-      }
+      const collection = isGuest
+        ? await addGuestCollection({
+            workspaceId,
+            name: payload.name,
+            description: payload.description,
+          })
+        : await apiClient.createCollection(payload);
+
+      addCollectionToWorkspace(workspaceId, collection);
       onSuccess();
     } catch (error) {
       const typed = error as Error & { details?: Record<string, string[]> };
@@ -143,6 +145,13 @@ export const CreateCollectionModal = ({ open, onClose, onSuccess }: Props) => {
           </button>
           <button
             type="submit"
+            onClick={() =>
+              console.log("Create Collection clicked", {
+                workspaceId,
+                name,
+                description,
+              })
+            }
             disabled={!canSubmit || submitting}
             className="px-4 py-2 rounded-lg bg-primary text-on-primary text-xs uppercase tracking-[0.4em] disabled:opacity-60"
           >

@@ -16,6 +16,7 @@ interface WorkspaceContextValue {
   loading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
+  addCollectionToWorkspace: (workspaceId: number, collection: NonNullable<Workspace["collections"]>[number]) => void;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextValue | undefined>(undefined);
@@ -107,6 +108,15 @@ export const WorkspacesProvider = ({ children }: { children: React.ReactNode }) 
   }, [status, loadWorkspaces]);
 
   useEffect(() => {
+    const handler = () => {
+      void loadWorkspaces();
+    };
+
+    window.addEventListener("pixend:refresh-workspaces", handler);
+    return () => window.removeEventListener("pixend:refresh-workspaces", handler);
+  }, [loadWorkspaces]);
+
+  useEffect(() => {
     if (status === "unauthenticated" && !isGuest && !isAuthenticated) {
       setWorkspaces([]);
       setError(null);
@@ -120,9 +130,28 @@ export const WorkspacesProvider = ({ children }: { children: React.ReactNode }) 
     };
   }, []);
 
+  const addCollectionToWorkspace = useCallback(
+    (workspaceId: number, collection: NonNullable<Workspace["collections"]>[number]) => {
+      setWorkspaces((prev) =>
+        prev.map((workspace) => {
+          if (workspace.id !== workspaceId) {
+            return workspace;
+          }
+
+          const existingCollections = workspace.collections ?? [];
+          return {
+            ...workspace,
+            collections: [...existingCollections, collection],
+          };
+        }),
+      );
+    },
+    [],
+  );
+
   const value = useMemo(
-    () => ({ workspaces, loading, error, refresh }),
-    [workspaces, loading, error, refresh],
+    () => ({ workspaces, loading, error, refresh, addCollectionToWorkspace }),
+    [workspaces, loading, error, refresh, addCollectionToWorkspace],
   );
 
   return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>;
