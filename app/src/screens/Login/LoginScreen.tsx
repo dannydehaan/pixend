@@ -3,10 +3,10 @@ import { useAuth } from "../../contexts/AuthContext";
 import { LoginPayload, RegisterPayload } from "../../services/api";
 
 const initialForm = {
-  name: "",
-  email: "",
-  password: "",
-  password_confirmation: "",
+  name: "Danny de Haan",
+  email: "danny@mediaboost.nl",
+  password: "annuleren",
+  password_confirmation: "annuleren",
 };
 
 type AuthMode = "login" | "register";
@@ -145,7 +145,7 @@ export const LoginScreen = () => {
 
             <button
               type="submit"
-              disabled={loading || status === "validating"}
+              disabled={loading || status === "loading"}
               className="w-full flex items-center justify-center py-2 rounded-lg bg-[#e84c1b] text-sm font-semibold uppercase tracking-widest hover:bg-[#cf3f14] transition-all disabled:opacity-60"
             >
               {loading ? "Working..." : mode === "login" ? "Login" : "Register"}

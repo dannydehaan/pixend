@@ -6,11 +6,11 @@ import { LoginScreen } from "../screens/Login/LoginScreen";
 const ProtectedRoute = () => {
   const { user, status } = useAuth();
 
-  if (status === "validating") {
+  if (status === "loading") {
     return <div className="text-center text-sm text-on-surface-variant">Validating session...</div>;
   }
 
-  if (!user) {
+  if (status === "unauthenticated" || !user) {
     return <Navigate to="/login" replace />;
   }
 

@@ -29,12 +29,17 @@ export const CollectionsScreen = () => {
   const [statusMessage, setStatusMessage] = useState("");
 
   const badgeText = useMemo(() => {
-    if (status === "authenticated" && workspaces.length) {
-      return `Connected · ${workspaces.length} workspace${workspaces.length === 1 ? "" : "s"}`;
+    if (status === "authenticated") {
+      if (workspaces.length) {
+        return `Connected · ${workspaces.length} workspace${workspaces.length === 1 ? "" : "s"}`;
+      }
+      return "Connected · no workspaces yet";
     }
-    if (status === "offline") {
-      return "Offline (cached)";
+
+    if (status === "unauthenticated") {
+      return "Not authenticated";
     }
+
     return "Connecting...";
   }, [status, workspaces.length]);
 

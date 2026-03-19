@@ -90,6 +90,9 @@ const ensureApiBase = (): string => {
 
 type RequestOpts = {
   auth?: boolean;
+  dedupeKey?: string;
+  signal?: AbortSignal;
+  force?: boolean;
 };
 
 const buildHeaders = async (includeAuth = true): Promise<HeadersInit> => {
@@ -108,35 +111,62 @@ const buildHeaders = async (includeAuth = true): Promise<HeadersInit> => {
   return headers;
 };
 
+const pendingRequests = new Map<string, Promise<unknown>>();
+
+const createRequestKey = (path: string, init: RequestInit, opts: RequestOpts): string => {
+  const method = (init.method ?? "GET").toUpperCase();
+  return opts.dedupeKey ?? `${method}:${path}`;
+};
+
 const request = async <T>(
   path: string,
   init: RequestInit = {},
   opts: RequestOpts = {},
 ): Promise<T> => {
   const includeAuth = opts.auth ?? true;
-  const headers = await buildHeaders(includeAuth);
   const apiBase = ensureApiBase();
-  console.log("fetch", apiBase + path, init.method ?? "GET", headers);
+  const key = createRequestKey(path, init, opts);
 
-  const response = await fetch(`${apiBase}${path}`, {
-    ...init,
-    headers: {
-      ...headers,
-      ...(init.headers ?? {}),
-    },
-  });
-
-  const contentType = response.headers.get("content-type");
-  const body = contentType?.includes("application/json") ? await response.json() : null;
-
-  if (!response.ok) {
-    const message = body?.message || "Request failed";
-    const error = new Error(message) as Error & { status?: number };
-    error.status = response.status;
-    throw error;
+  if (!opts.force && pendingRequests.has(key)) {
+    return pendingRequests.get(key) as Promise<T>;
   }
 
-  return body as T;
+  const controller = new AbortController();
+  const signal = opts.signal ?? controller.signal;
+  const headers = await buildHeaders(includeAuth);
+
+  const fetchPromise = (async () => {
+    const response = await fetch(`${apiBase}${path}`, {
+      ...init,
+      headers: {
+        ...headers,
+        ...(init.headers ?? {}),
+      },
+      signal,
+    });
+
+    const contentType = response.headers.get("content-type");
+    const body = contentType?.includes("application/json") ? await response.json() : null;
+
+    if (!response.ok) {
+      const message = body?.message || "Request failed";
+      const error = new Error(message) as Error & { status?: number };
+      error.status = response.status;
+      throw error;
+    }
+
+    return body as T;
+  })();
+
+  pendingRequests.set(key, fetchPromise);
+
+  try {
+    return await fetchPromise;
+  } finally {
+    if (pendingRequests.get(key) === fetchPromise) {
+      pendingRequests.delete(key);
+    }
+  }
 };
 
 export type UserSummary = {
@@ -209,9 +239,14 @@ export const apiClient = {
     return clearToken();
   },
 
-  validateToken() {
+  validateToken(options?: { signal?: AbortSignal }) {
     return request<{ user: UserSummary }>("/auth/me", {
       method: "GET",
+    }, {
+      dedupeKey: "GET:/auth/me",
+      signal: options?.signal,
     });
   },
 };
+
+export type ApiClient = typeof apiClient;

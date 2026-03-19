@@ -62,3 +62,25 @@ it('allows an authenticated user to logout', function () {
         ->assertOk()
         ->assertJson([ 'message' => 'Logged out' ]);
 });
+
+it('returns the current user via /auth/me when the token is valid', function () {
+    $user = User::factory()->create();
+    $token = $user->createToken('api-token')->plainTextToken;
+
+    $this->withHeader('Authorization', "Bearer {$token}")
+        ->getJson('/api/1.0/auth/me')
+        ->assertOk()
+        ->assertJson([
+            'data' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+            ],
+        ]);
+});
+
+it('denies /auth/me when the token is invalid', function () {
+    $this->withHeader('Authorization', 'Bearer invalid-token')
+        ->getJson('/api/1.0/auth/me')
+        ->assertStatus(401);
+});
