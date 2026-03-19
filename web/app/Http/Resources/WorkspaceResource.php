@@ -20,6 +20,12 @@ class WorkspaceResource extends JsonResource
                 'name' => $user->name,
                 'email' => $user->email,
             ])),
+            'type' => $this->whenLoaded('type', fn () => [
+                'id' => $this->type->id,
+                'slug' => $this->type->slug,
+                'name' => $this->type->name,
+                'description' => $this->type->description,
+            ]),
             'collections' => $this->whenLoaded('collections', fn () => $this->collections->map(fn ($collection) => [
                 'id' => $collection->id,
                 'name' => $collection->name,

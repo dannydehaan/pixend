@@ -30,4 +30,10 @@ export const workspaceFactory = (): Workspace => ({
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
   collections: [collection()],
+  type: {
+    id: 1,
+    slug: "standard",
+    name: "Standard",
+    description: "Default",
+  },
 });

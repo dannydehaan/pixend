@@ -194,6 +194,13 @@ export type UserSummary = {
   email: string;
 };
 
+export type WorkspaceType = {
+  id: number;
+  slug: string;
+  name: string;
+  description: string | null;
+};
+
 export type Environment = {
   id: number;
   collection_id: number;
@@ -225,6 +232,7 @@ export type Workspace = {
   updated_at: string;
   users?: UserSummary[];
   collections?: Collection[];
+  type?: WorkspaceType;
 };
 
 export type CollectionOverviewEndpoint = {

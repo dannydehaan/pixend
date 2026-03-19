@@ -30,6 +30,7 @@ export const CollectionsScreen = () => {
     [collections],
   );
   const heroCollection = collections[0];
+  const workspaceTypeLabel = useMemo(() => workspaces[0]?.type?.name ?? "Workspace", [workspaces]);
   const totalEndpoints = heroCollection?.endpoint_count ?? 0;
 
   const connectionState = useMemo(() => {
@@ -123,7 +124,7 @@ export const CollectionsScreen = () => {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
               <div className="space-y-4 max-w-2xl">
                 <div className="flex items-center gap-3">
-                  <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold tracking-widest uppercase">Collection</span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold tracking-widest uppercase">{workspaceTypeLabel}</span>
                   <span className="text-outline-variant text-xs">•</span>
                   <span className="text-on-surface-variant text-xs font-mono">Project dashboard</span>
                 </div>
