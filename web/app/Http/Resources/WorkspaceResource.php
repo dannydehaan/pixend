@@ -25,6 +25,13 @@ class WorkspaceResource extends JsonResource
                 'slug' => $this->type->slug,
                 'name' => $this->type->name,
                 'description' => $this->type->description,
+                'sync_enabled' => $this->type->sync_enabled,
+                'requires_organization' => $this->type->requires_organization,
+            ]),
+            'organization' => $this->whenLoaded('organization', fn () => [
+                'id' => $this->organization->id,
+                'name' => $this->organization->name,
+                'slug' => $this->organization->slug,
             ]),
             'collections' => $this->whenLoaded('collections', fn () => $this->collections->map(fn ($collection) => [
                 'id' => $collection->id,

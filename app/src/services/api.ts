@@ -199,6 +199,8 @@ export type WorkspaceType = {
   slug: string;
   name: string;
   description: string | null;
+  sync_enabled: boolean;
+  requires_organization: boolean;
 };
 
 export type Environment = {
@@ -233,6 +235,11 @@ export type Workspace = {
   users?: UserSummary[];
   collections?: Collection[];
   type?: WorkspaceType;
+  organization?: {
+    id: number;
+    name: string;
+    slug: string;
+  };
 };
 
 export type CollectionOverviewEndpoint = {

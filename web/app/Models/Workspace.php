@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\WorkspaceType;
+use App\Models\Organization;
 
 class Workspace extends Model
 {
@@ -15,6 +16,7 @@ class Workspace extends Model
         'slug',
         'description',
         'workspace_type_id',
+        'organization_id',
     ];
 
     public function users(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
@@ -30,5 +32,10 @@ class Workspace extends Model
     public function type(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(WorkspaceType::class);
+    }
+
+    public function organization(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Organization::class);
     }
 }

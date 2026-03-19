@@ -7,12 +7,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public const DEFAULT_TYPES = [
-        ['slug' => 'standard', 'name' => 'Standard Workspace', 'description' => 'Default working area for collections and environments.'],
-        ['slug' => 'sandbox', 'name' => 'Sandbox', 'description' => 'Disposable workspace for trying new flows before sharing.'],
-        ['slug' => 'team', 'name' => 'Team Workspace', 'description' => 'Shared workspace for a team with tighter controls.'],
-    ];
-
     public function up(): void
     {
         Schema::create('workspace_types', function (Blueprint $table) {
@@ -20,15 +14,40 @@ return new class extends Migration
             $table->string('slug')->unique();
             $table->string('name');
             $table->text('description')->nullable();
+            $table->boolean('sync_enabled')->default(false);
+            $table->boolean('requires_organization')->default(false);
             $table->timestamps();
         });
 
-        foreach (self::DEFAULT_TYPES as $type) {
-            DB::table('workspace_types')->insert(array_merge($type, [
+        DB::table('workspace_types')->insert([
+            [
+                'slug' => 'local',
+                'name' => 'Local Workspace',
+                'description' => 'Local workspace that keeps data on this device without syncing.',
+                'sync_enabled' => false,
+                'requires_organization' => false,
                 'created_at' => now(),
                 'updated_at' => now(),
-            ]));
-        }
+            ],
+            [
+                'slug' => 'company',
+                'name' => 'Company Workspace',
+                'description' => 'Synced workspace owned by an organization for shared teams.',
+                'sync_enabled' => true,
+                'requires_organization' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'slug' => 'premium_personal',
+                'name' => 'Premium Personal Workspace',
+                'description' => 'Synced personal workspace reserved for premium subscribers.',
+                'sync_enabled' => true,
+                'requires_organization' => false,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ]);
     }
 
     public function down(): void

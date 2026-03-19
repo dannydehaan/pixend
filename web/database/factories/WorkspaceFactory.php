@@ -15,12 +15,14 @@ class WorkspaceFactory extends Factory
     {
         $name = $this->faker->unique()->company;
 
-        $type = WorkspaceType::firstWhere('slug', WorkspaceType::STANDARD);
+        $type = WorkspaceType::firstWhere('slug', WorkspaceType::LOCAL);
         if (! $type) {
             $type = WorkspaceType::create([
-                'slug' => WorkspaceType::STANDARD,
-                'name' => 'Standard Workspace',
-                'description' => 'Default workspace type',
+                'slug' => WorkspaceType::LOCAL,
+                'name' => 'Local Workspace',
+                'description' => 'Local workspace that keeps data on the device.',
+                'sync_enabled' => false,
+                'requires_organization' => false,
             ]);
         }
 

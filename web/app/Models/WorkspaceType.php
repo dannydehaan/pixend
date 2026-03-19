@@ -9,19 +9,26 @@ class WorkspaceType extends Model
 {
     use HasFactory;
 
-    public const STANDARD = 'standard';
-    public const SANDBOX = 'sandbox';
-    public const TEAM = 'team';
+    public const LOCAL = 'local';
+    public const COMPANY = 'company';
+    public const PREMIUM_PERSONAL = 'premium_personal';
 
     protected $fillable = [
         'slug',
         'name',
         'description',
+        'sync_enabled',
+        'requires_organization',
+    ];
+
+    protected $casts = [
+        'sync_enabled' => 'boolean',
+        'requires_organization' => 'boolean',
     ];
 
     public static function getDefaultType(): WorkspaceType
     {
-        return static::firstWhere('slug', self::STANDARD);
+            return static::firstWhere('slug', self::LOCAL);
     }
 
     public function workspaces(): \Illuminate\Database\Eloquent\Relations\HasMany
