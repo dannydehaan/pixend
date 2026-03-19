@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\CollectionOverviewController;
+use App\Http\Controllers\EnvironmentController;
 use App\Http\Controllers\WorkspaceController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -22,6 +24,8 @@ Route::prefix('1.0')->group(function () {
             ];
         });
         Route::get('collections/overview', [CollectionOverviewController::class, 'show']);
+        Route::post('collections', [CollectionController::class, 'store']);
+        Route::post('environments', [EnvironmentController::class, 'store']);
         Route::get('workspaces', [WorkspaceController::class, 'index']);
         Route::post('workspaces', [WorkspaceController::class, 'store']);
         Route::post('workspaces/{workspace}/users', [WorkspaceController::class, 'attachUser']);

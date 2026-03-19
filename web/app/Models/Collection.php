@@ -34,4 +34,9 @@ class Collection extends Model
     {
         return $this->hasMany(CollectionEndpoint::class);
     }
+
+    public function environments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Environment::class);
+    }
 }
