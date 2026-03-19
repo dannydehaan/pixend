@@ -1,9 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useWorkspaces } from "../../contexts/WorkspaceContext";
 import { Collection } from "../../services/api";
 import { CreateCollectionModal } from "./CreateCollectionModal";
 import { CreateEnvironmentModal } from "./CreateEnvironmentModal";
+import {
+  PixCollection,
+  exportCollection,
+  parseCollectionFile,
+} from "../../lib/collectionIO";
 
 const formatRelativeUpdated = (timestamp?: string) => {
   if (!timestamp) return "Updated soon";
@@ -14,11 +19,34 @@ const formatRelativeUpdated = (timestamp?: string) => {
 const canCreateCollection = (isGuest: boolean, collectionsLength: number) => !isGuest || collectionsLength < 1;
 const canCreateEnvironment = (isGuest: boolean, totalEnvironments: number) => !isGuest || totalEnvironments < 1;
 
+const sampleCollection: PixCollection = {
+  name: "Authentication Kit",
+  requests: [
+    {
+      name: "Login",
+      method: "POST",
+      url: "https://api.pixend.io/v1/auth/login",
+      headers: { "Content-Type": "application/json" },
+      body: { type: "json", content: { identifier: "project-admin", password: "secret-pass" } },
+    },
+    {
+      name: "Fetch Profile",
+      method: "GET",
+      url: "https://api.pixend.io/v1/users/profile",
+      headers: { Authorization: "Bearer <token>" },
+    },
+  ],
+};
+
 export const CollectionsScreen = () => {
   const { status, isGuest, user } = useAuth();
   const { workspaces, loading, error, refresh } = useWorkspaces();
   const [isCreatingCollection, setIsCreatingCollection] = useState(false);
   const [activeCollection, setActiveCollection] = useState<Collection | null>(null);
+  const [customCollections, setCustomCollections] = useState<PixCollection[]>([sampleCollection]);
+  const [importMessage, setImportMessage] = useState<string | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const collections = useMemo(() => workspaces.flatMap((workspace) => workspace.collections ?? []), [workspaces]);
   const totalEnvironments = useMemo(
@@ -65,6 +93,15 @@ export const CollectionsScreen = () => {
     return () => clearTimeout(timer);
   }, [upgradeMessage]);
 
+  useEffect(() => {
+    if (!importMessage && !importError) return;
+    const timer = setTimeout(() => {
+      setImportMessage(null);
+      setImportError(null);
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [importMessage, importError]);
+
   const handleCreateCollection = () => {
     if (!canCreateCollectionValue) {
       showUpgradeMessage("collections");
@@ -79,6 +116,28 @@ export const CollectionsScreen = () => {
       return;
     }
     setActiveCollection(collection);
+  };
+
+  const triggerImportPicker = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImport = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      const payload = await file.text();
+      const parsed = parseCollectionFile(payload);
+      setCustomCollections((prev) => [...prev, parsed]);
+      setImportMessage(`Imported ${parsed.name}`);
+      setImportError(null);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unable to import file";
+      setImportError(message);
+      setImportMessage(null);
+    } finally {
+      event.target.value = "";
+    }
   };
 
   return (
@@ -144,6 +203,29 @@ export const CollectionsScreen = () => {
                   Upgrade to premium to create more workspaces
                 </p>
               )}
+              <button
+                type="button"
+                onClick={triggerImportPicker}
+                className="px-8 py-3 rounded-xl border border-[var(--border)] text-[var(--text)] font-semibold flex items-center justify-center gap-2 hover:bg-[var(--surface)] transition-all"
+              >
+                <span className="material-symbols-outlined text-lg">upload_file</span>
+                Import Collection
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pix,.json,.bru"
+                onChange={handleImport}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => exportCollection(sampleCollection)}
+                className="px-8 py-3 rounded-xl border border-[var(--border)] text-[var(--text)] font-semibold flex items-center justify-center gap-2 hover:bg-[var(--surface)] transition-all"
+              >
+                <span className="material-symbols-outlined text-lg">download</span>
+                Export Sample (.pix)
+              </button>
               <button className="px-8 py-3 rounded-xl border border-outline-variant/30 text-on-surface font-semibold flex items-center justify-center gap-2 hover:bg-surface-container-high transition-all">
                 <span className="material-symbols-outlined text-lg">share</span>
                 Export Docs
@@ -162,6 +244,15 @@ export const CollectionsScreen = () => {
               </div>
             )}
           </div>
+          {(importMessage || importError) && (
+            <div className="mt-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3 text-sm text-[var(--text)]">
+              {importMessage ? (
+                <span className="text-[var(--primary)]">{importMessage}</span>
+              ) : (
+                <span className="text-error">{importError}</span>
+              )}
+            </div>
+          )}
         </div>
       </section>
       <section className="px-8 py-10 max-w-6xl mx-auto w-full space-y-6">
@@ -220,6 +311,67 @@ export const CollectionsScreen = () => {
             </article>
           ))}
         </div>
+        {customCollections.length > 0 && (
+          <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 space-y-6 shadow-lg shadow-black/20">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm uppercase tracking-[0.4em] text-[var(--muted)]">Collections Library</p>
+                <h3 className="text-xl font-semibold text-[var(--text)]">Saved collections</h3>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={triggerImportPicker}
+                  className="px-4 py-2 rounded-md border border-[var(--border)] text-[var(--text)] text-xs font-semibold uppercase tracking-[0.3em] hover:bg-[var(--surface)] transition-all"
+                >
+                  Import Collection
+                </button>
+                <button
+                  type="button"
+                  onClick={() => exportCollection(sampleCollection)}
+                  className="px-4 py-2 rounded-md border border-[var(--border)] text-[var(--text)] text-xs font-semibold uppercase tracking-[0.3em] hover:bg-[var(--surface)] transition-all"
+                >
+                  Export Sample
+                </button>
+              </div>
+            </div>
+            <div className="grid gap-4 lg:grid-cols-2">
+              {customCollections.map((collection, index) => (
+                <article
+                  key={`${collection.name}-${index}`}
+                  className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 space-y-3"
+                >
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-lg font-semibold text-[var(--text)]">{collection.name}</h4>
+                    <span className="text-xs uppercase tracking-[0.3em] text-[var(--muted)]">
+                      {collection.requests.length} requests
+                    </span>
+                  </div>
+                  <p className="text-sm text-[var(--muted)]">
+                    Stored requests include the URL, method, headers, and body payload as JSON-ready content.
+                  </p>
+                  <div className="flex flex-wrap gap-2 text-xs text-[var(--muted)]">
+                    {collection.requests.slice(0, 3).map((request) => (
+                      <span key={request.name} className="px-2 py-1 rounded-full border border-[var(--border)] bg-[var(--background)]">
+                        {request.method.toUpperCase()} · {request.url.replace(/^https?:\/\//, "")}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={() => exportCollection(collection)}
+                      className="px-4 py-2 rounded-md border border-[var(--border)] text-[var(--text)] text-xs font-semibold uppercase tracking-[0.3em] hover:bg-[var(--surface)] transition-all"
+                    >
+                      Export .pix
+                    </button>
+                    <span className="text-[var(--muted)] text-[11px]">Share or backup</span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
         {!collections.length && !loading && (
           <p className="rounded-2xl border border-dashed border-[#494454]/50 px-6 py-5 text-sm text-on-surface-variant">
             No collections yet. Create one to get started.

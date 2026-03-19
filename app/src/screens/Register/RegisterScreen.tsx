@@ -50,7 +50,7 @@ export const RegisterScreen = () => {
   };
 
   return (
-    <div className="px-8 pt-12 pb-16">
+    <div className="px-8 pt-12 pb-16 bg-[var(--background)] text-[var(--text)] min-h-screen">
       <div className="max-w-3xl mx-auto space-y-8">
         <div className="space-y-2">
           <p className="text-xs uppercase tracking-[0.4em] text-secondary/60">Create account</p>
@@ -61,45 +61,45 @@ export const RegisterScreen = () => {
         </div>
         <form
           onSubmit={handleSubmit}
-          className="space-y-6 rounded-2xl border border-[#494454]/40 bg-[#0f1629] p-8 shadow-lg shadow-black/30"
+          className="space-y-6 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-8 shadow-lg shadow-black/30"
         >
           {error && (
             <p className="text-sm text-error/80 uppercase tracking-[0.3em] text-center">{error}</p>
           )}
           <div className="space-y-2">
-            <label className="text-xs uppercase tracking-[0.4em] text-[#dae2fd]/60">Email</label>
+            <label className="text-xs uppercase tracking-[0.4em] text-[var(--muted)]">Email</label>
             <input
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="w-full rounded-lg border border-[#494454]/50 bg-[#11152a] px-4 py-3 text-sm outline-none focus:border-[#e84c1b]"
+              className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm outline-none focus:border-[var(--primary)]"
               required
             />
           </div>
           <div className="space-y-2">
-            <label className="text-xs uppercase tracking-[0.4em] text-[#dae2fd]/60">Password</label>
+            <label className="text-xs uppercase tracking-[0.4em] text-[var(--muted)]">Password</label>
             <input
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="w-full rounded-lg border border-[#494454]/50 bg-[#11152a] px-4 py-3 text-sm outline-none focus:border-[#e84c1b]"
+              className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm outline-none focus:border-[var(--primary)]"
               required
             />
           </div>
           <div className="space-y-2">
-            <label className="text-xs uppercase tracking-[0.4em] text-[#dae2fd]/60">Confirm Password</label>
+            <label className="text-xs uppercase tracking-[0.4em] text-[var(--muted)]">Confirm Password</label>
             <input
               type="password"
               value={confirmPassword}
               onChange={(event) => setConfirmPassword(event.target.value)}
-              className="w-full rounded-lg border border-[#494454]/50 bg-[#11152a] px-4 py-3 text-sm outline-none focus:border-[#e84c1b]"
+              className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm outline-none focus:border-[var(--primary)]"
               required
             />
           </div>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-lg bg-primary px-5 py-3 text-sm font-semibold uppercase tracking-[0.4em] text-on-primary transition-all disabled:opacity-60"
+            className="w-full rounded-lg border border-[var(--border)] bg-[var(--primary)] px-5 py-3 text-sm font-semibold uppercase tracking-[0.4em] text-[var(--text-on-primary)] transition-all disabled:opacity-60"
           >
             {isSubmitting ? "Creating account…" : "Create account"}
           </button>

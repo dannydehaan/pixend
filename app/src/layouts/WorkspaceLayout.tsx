@@ -1,5 +1,6 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { useSettings } from "../contexts/SettingsContext";
 
 type PrimaryNavItem = {
   icon: string;
@@ -38,9 +39,14 @@ export const WorkspaceLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const { openSettings } = useSettings();
+
   return (
     <div className="flex h-screen overflow-hidden bg-surface text-on-surface">
-      <aside className="hidden md:flex flex-col h-full border-r border-[#494454]/10 bg-[#131b2e] w-64 flex-shrink-0">
+      <aside
+        className="hidden md:flex flex-col h-full w-64 flex-shrink-0"
+        style={{ borderColor: "var(--border)", backgroundColor: "var(--surface)" }}
+      >
         <div className="p-6 flex flex-col gap-1">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center">
@@ -54,7 +60,7 @@ export const WorkspaceLayout = () => {
           <button
             type="button"
             onClick={() => navigate("/collections")}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded bg-surface-container-high text-primary text-xs font-semibold uppercase tracking-widest hover:bg-[#222a3d]/50 transition-all active:scale-95"
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded bg-[var(--surface)] text-[var(--primary)] text-xs font-semibold uppercase tracking-widest hover:bg-[var(--border)]/40 transition-all active:scale-95"
           >
             <span className="material-symbols-outlined text-sm">add</span>
             New Collection
@@ -70,8 +76,8 @@ export const WorkspaceLayout = () => {
                 onClick={() => navigate(link.path)}
                 className={`flex items-center gap-3 px-3 py-3 rounded transition-all text-xs font-semibold uppercase tracking-widest ${
                   isActive
-                    ? "bg-[#222a3d] text-[#e84c1b] border-r-2 border-[#e84c1b]"
-                    : "text-[#dae2fd]/50 hover:text-[#dae2fd] hover:bg-[#222a3d]/50"
+                    ? "bg-[var(--border)] text-[var(--primary)] border-r-2 border-[var(--primary)]"
+                    : "text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--border)]/40"
                 }`}
               >
                 <span className="material-symbols-outlined text-[20px]">{link.icon}</span>
@@ -79,11 +85,11 @@ export const WorkspaceLayout = () => {
               </button>
             );
           })}
-          <div className="mt-2 space-y-1 border-t border-[#494454]/10 pt-3">
+          <div className="mt-2 space-y-1 border-t pt-3" style={{ borderColor: "var(--border)" }}>
             {utilityNavItems.map((link) => (
               <div
                 key={link.label}
-                className="flex items-center gap-3 px-3 py-3 rounded text-[#dae2fd]/50 hover:text-[#dae2fd] hover:bg-[#222a3d]/50 transition-all cursor-pointer"
+                className="flex items-center gap-3 px-3 py-3 rounded text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--border)]/40 transition-all cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[20px]">{link.icon}</span>
                 <span className="text-xs font-semibold uppercase tracking-widest">{link.label}</span>
@@ -92,53 +98,59 @@ export const WorkspaceLayout = () => {
           </div>
         </nav>
         {isGuest && (
-          <div className="p-4 border-t border-[#494454]/10 space-y-2">
-            <p className="text-[11px] text-[#dae2fd]/60 uppercase tracking-[0.4em]">
+          <div className="p-4 border-t space-y-2" style={{ borderColor: "var(--border)" }}>
+            <p className="text-[11px] text-[var(--muted)] uppercase tracking-[0.4em]">
               Create an account to sync your data across devices.
             </p>
             <button
               type="button"
               onClick={() => navigate("/register")}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded bg-primary text-on-primary text-xs font-semibold uppercase tracking-[0.3em] hover:bg-primary/90 transition-all"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded bg-[var(--primary)] text-[var(--text)] text-xs font-semibold uppercase tracking-[0.3em] hover:bg-[var(--primary)]/90 transition-all"
             >
               <span className="material-symbols-outlined text-sm">person_add</span>
               Create Account
             </button>
           </div>
         )}
-        <div className="p-3 border-t border-[#494454]/10 flex flex-col gap-1">
-          <div className="flex items-center gap-3 px-3 py-3 rounded text-[#dae2fd]/50 hover:text-[#dae2fd] hover:bg-[#222a3d]/50 transition-all cursor-pointer">
+        <div className="p-3 border-t flex flex-col gap-1" style={{ borderColor: "var(--border)" }}>
+          <div className="flex items-center gap-3 px-3 py-3 rounded text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--border)]/40 transition-all cursor-pointer">
             <span className="material-symbols-outlined text-[20px]">settings</span>
             <span className="text-xs font-semibold uppercase tracking-widest">Settings</span>
           </div>
-          <div className="flex items-center gap-3 px-3 py-3 rounded text-[#dae2fd]/50 hover:text-[#dae2fd] hover:bg-[#222a3d]/50 transition-all cursor-pointer">
+          <div className="flex items-center gap-3 px-3 py-3 rounded text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--border)]/40 transition-all cursor-pointer">
             <span className="material-symbols-outlined text-[20px]">help</span>
             <span className="text-xs font-semibold uppercase tracking-widest">Help</span>
           </div>
         </div>
       </aside>
       <main className="flex-1 flex flex-col h-full bg-surface overflow-y-auto">
-        <header className="sticky top-0 z-50 flex justify-between items-center w-full px-6 h-16 backdrop-blur-xl bg-[#0b1326]/90 border-none">
+        <header
+          className="sticky top-0 z-50 flex justify-between items-center w-full px-6 h-16 backdrop-blur-xl border-none"
+          style={{ backgroundColor: "var(--surface)" }}
+        >
           <div className="flex items-center gap-8">
-            <span className="text-xl font-black tracking-tighter uppercase text-[#e84c1b]">Pixend</span>
+            <span className="text-xl font-black tracking-tighter uppercase text-[var(--primary)]">Pixend</span>
             <nav className="hidden lg:flex items-center gap-6">
-              <a className="font-['Inter'] tracking-tight text-sm font-bold text-[#e84c1b] border-b-2 border-[#e84c1b] pb-1" href="#">
+              <a className="font-['Inter'] tracking-tight text-sm font-bold text-[var(--primary)] border-b-2 border-[var(--primary)] pb-1" href="#">
                 Workspace
               </a>
-              <a className="font-['Inter'] tracking-tight text-sm font-medium text-[#dae2fd]/60 hover:text-[#dae2fd]" href="#">
+              <a className="font-['Inter'] tracking-tight text-sm font-medium text-[var(--muted)] hover:text-[var(--text)]" href="#">
                 Environments
               </a>
-              <a className="font-['Inter'] tracking-tight text-sm font-medium text-[#dae2fd]/60 hover:text-[#dae2fd]" href="#">
+              <a className="font-['Inter'] tracking-tight text-sm font-medium text-[var(--muted)] hover:text-[var(--text)]" href="#">
                 History
               </a>
             </nav>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <button className="p-2 rounded hover:bg-[#222a3d] transition-colors duration-200 text-[#dae2fd]/60">
+              <button
+                className="p-2 rounded hover:bg-[var(--border)]/40 transition-colors duration-200 text-[var(--muted)]"
+                onClick={openSettings}
+              >
                 <span className="material-symbols-outlined">settings</span>
               </button>
-              <button className="p-2 rounded hover:bg-[#222a3d] transition-colors duration-200 text-[#dae2fd]/60">
+              <button className="p-2 rounded hover:bg-[var(--border)]/40 transition-colors duration-200 text-[var(--muted)]">
                 <span className="material-symbols-outlined">notifications</span>
               </button>
             </div>
@@ -147,12 +159,12 @@ export const WorkspaceLayout = () => {
                 <button
                   type="button"
                   onClick={() => navigate("/login", { replace: true })}
-                  className="px-5 py-1.5 rounded-lg border border-[#494454]/70 text-xs uppercase tracking-[0.3em] text-[#e84c1b] hover:border-[#e84c1b]"
+                  className="px-5 py-1.5 rounded-lg border border-[var(--border)] border-opacity-70 text-xs uppercase tracking-[0.3em] text-[var(--primary)] hover:border-[var(--primary)]"
                 >
                   Login / Upgrade
                 </button>
               )}
-              <button className="bg-primary-container text-on-primary-container px-5 py-1.5 rounded-lg text-sm font-bold active:scale-95 transition-all">
+              <button className="bg-[var(--primary)] text-[var(--text)] px-5 py-1.5 rounded-lg text-sm font-bold active:scale-95 transition-all">
                 Send
               </button>
             </div>

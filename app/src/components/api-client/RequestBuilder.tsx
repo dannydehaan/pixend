@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import BodyEditor from "./BodyEditor";
 import CodeGeneratorPanel from "./CodeGeneratorPanel";
 import HeaderList from "./HeaderList";
@@ -342,15 +342,18 @@ const RequestBuilder = () => {
   ];
 
   return (
-    <div className="space-y-6">
-      <section className="grid gap-4 bg-surface-container-high rounded-2xl border border-[#494454]/30 p-6">
+    <div className="space-y-6 relative">
+      <section
+        className="grid gap-4 rounded-2xl border p-6"
+        style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}
+      >
         <div className="flex flex-col gap-2 md:flex-row md:items-center">
           <label className="sr-only" htmlFor="http-method">
             HTTP method
           </label>
           <select
             id="http-method"
-            className="rounded-lg border border-outline-variant/50 bg-[#0f172a] px-3 py-2 text-xs font-black uppercase tracking-[0.4em] text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+            className="rounded-lg border border-outline-variant/50 bg-[var(--surface)] px-3 py-2 text-xs font-black uppercase tracking-[0.4em] text-[var(--primary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
             value={requestState.method}
             onChange={(event) => handleMethodChange(event.target.value as HttpMethod)}
           >
@@ -365,7 +368,7 @@ const RequestBuilder = () => {
           </label>
           <input
             id="request-url"
-            className="flex-1 rounded-lg border border-outline-variant/30 bg-[#0f1326] px-4 py-2 text-sm font-semibold text-on-surface placeholder:text-on-surface-variant focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+            className="flex-1 rounded-lg border border-outline-variant/30 bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[var(--text)] placeholder:text-on-surface-variant focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
             placeholder="https://api.example.com/..."
             value={requestState.url}
             onChange={(event) => handleUrlChange(event.target.value)}
@@ -376,7 +379,7 @@ const RequestBuilder = () => {
           />
           <button
             type="button"
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-br from-primary to-primary-container px-4 py-2 text-xs font-bold uppercase tracking-[0.35em] text-on-primary-container disabled:cursor-not-allowed disabled:opacity-60"
+            className="send-button inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-[0.35em] disabled:cursor-not-allowed disabled:opacity-60"
             onClick={handleSend}
             disabled={isSending}
           >
@@ -387,7 +390,7 @@ const RequestBuilder = () => {
           </button>
           <button
             type="button"
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-outline-variant/40 bg-[#0f1326] px-4 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-on-surface-variant hover:border-outline-variant"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-outline-variant/40 bg-[var(--surface)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-[var(--muted)] hover:border-outline-variant"
             onClick={() => setIsCodePanelOpen(true)}
           >
             <span className="material-symbols-outlined text-sm" aria-hidden>
@@ -424,7 +427,10 @@ const RequestBuilder = () => {
           </TabPanel>
           <TabPanel tabId="body" activeTab={activeTab}>
             {requestState.method === "GET" ? (
-              <section className="rounded-2xl border border-[#494454]/30 bg-surface-container-lowest p-6 text-xs text-on-surface-variant">
+            <section
+              className="rounded-2xl border p-6 text-xs text-[var(--muted)]"
+              style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}
+            >
                 GET requests do not support a body. JSON data will be serialized as query parameters.
               </section>
             ) : showBodyEditor ? (
@@ -437,7 +443,10 @@ const RequestBuilder = () => {
                 onSendRequest={handleSend}
               />
             ) : (
-              <section className="rounded-2xl border border-[#494454]/30 bg-surface-container-lowest p-6 text-xs text-on-surface-variant">
+            <section
+              className="rounded-2xl border p-6 text-xs text-[var(--muted)]"
+              style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}
+            >
                 Body payload is only available for POST, PUT, or PATCH methods.
               </section>
             )}
@@ -455,6 +464,7 @@ const RequestBuilder = () => {
 
       <ResponseViewer response={requestState.response} isLoading={isSending} errorMessage={sendError} />
       <CodeGeneratorPanel isOpen={isCodePanelOpen} onClose={() => setIsCodePanelOpen(false)} request={codeRequestPayload} />
+
     </div>
   );
 };

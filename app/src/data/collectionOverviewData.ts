@@ -3,7 +3,7 @@ export type RequestCardEntry = {
   path: string;
   title: string;
   description: string;
-  color: string;
+  accentColor: string;
   tags: string[];
 };
 
@@ -75,7 +75,7 @@ export const catalogEntries: RequestCardEntry[] = [
     title: "Retrieve User Profile",
     description:
       "Returns comprehensive user details including active subscriptions, security preferences, and metadata.",
-    color: "border-l-4 border-blue-400",
+    accentColor: "var(--primary)",
     tags: ["Auth: Bearer", "Cache: 300s"],
   },
   {
@@ -84,7 +84,7 @@ export const catalogEntries: RequestCardEntry[] = [
     title: "Provision Cloud Resource",
     description:
       "Initiates an asynchronous workflow to allocate new virtual infrastructure in the specified region.",
-    color: "border-l-4 border-primary",
+    accentColor: "var(--primary-hover)",
     tags: ["Body: JSON", "Priority: High"],
   },
   {
@@ -92,7 +92,7 @@ export const catalogEntries: RequestCardEntry[] = [
     path: "/v1/settings/network",
     title: "Update Network Config",
     description: "Modify existing VPC peering or subnet masks. Requires administrative tier permissions.",
-    color: "border-l-4 border-amber-400",
+    accentColor: "var(--border)",
     tags: ["Idempotent"],
   },
   {
@@ -100,7 +100,7 @@ export const catalogEntries: RequestCardEntry[] = [
     path: "/v1/auth/revoke-token",
     title: "Revoke Access Token",
     description: "Immediately invalidates the provided Bearer token across all global edge locations.",
-    color: "border-l-4 border-error",
+    accentColor: "var(--muted)",
     tags: ["Destructive"],
   },
 ];

@@ -7,19 +7,72 @@
 
 :root {
   font-family: "Inter", sans-serif;
-  background-color: #0b1326;
-  color: #dae2fd;
+  --background: #000000;
+  --surface: #0a0a0a;
+  --primary: #e84c1b;
+  --text: #ffffff;
+  --muted: #888888;
+  --border: #1a1a1a;
+  --primary-hover: #ff5a26;
+  --text-on-primary: #ffffff;
+  background-color: var(--background);
+  color: var(--text);
+}
+
+* {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
   font-family: "Inter", sans-serif;
-  background-color: #0b1326;
+  background-color: var(--background);
+  color: var(--text);
 }
 
 #root {
   min-height: 100vh;
+}
+
+/* Override hard-coded Tailwind colors so CSS vars drive them */
+[class*="bg-[#0b1326]"],
+[class*="bg-[#0f1326]"],
+[class*="bg-[#0f1629]"],
+[class*="bg-[#0f172a]"],
+[class*="bg-[#131b2e]"],
+[class*="bg-[#11152a]"],
+[class*="bg-[#060e20]"],
+[class*="bg-[#171f33]"] {
+  background-color: var(--surface) !important;
+}
+
+[class*="bg-[#222a3d]"] {
+  background-color: var(--border) !important;
+}
+
+[class*="border-[#494454]"] {
+  border-color: var(--border) !important;
+}
+
+[class*="text-[#dae2fd]"] {
+  color: var(--text) !important;
+}
+
+[class*="text-[#e84c1b]"] {
+  color: var(--primary) !important;
+}
+
+[class*="border-[#e84c1b]"] {
+  border-color: var(--primary) !important;
+}
+
+[class*="bg-[#e84c1b]"] {
+  background-color: var(--primary) !important;
+}
+
+[class*="bg-[#cf3f14]"] {
+  background-color: var(--primary) !important;
 }
 
 .mono {
@@ -28,4 +81,15 @@ body {
 
 .material-symbols-outlined {
   font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+}
+
+.send-button {
+  background-color: var(--primary);
+  color: var(--text-on-primary);
+  border: 1px solid var(--border);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.send-button:hover:not(:disabled) {
+  background-color: var(--primary-hover);
 }

@@ -1,7 +1,10 @@
 import type { RequestCardEntry } from "../../data/collectionOverviewData";
 
-const RequestCard = ({ method, path, title, description, color, tags }: RequestCardEntry) => (
-  <div className={`group relative bg-surface-container-low rounded-xl p-6 hover:bg-surface-container-high transition-all duration-300 border-l-4 ${color}`}>
+const RequestCard = ({ method, path, title, description, tags, accentColor }: RequestCardEntry) => (
+  <div
+    className="group relative bg-surface-container-low rounded-xl p-6 hover:bg-surface-container-high transition-all duration-300 border-l-4"
+    style={{ borderColor: accentColor }}
+  >
     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
       <div className="flex-1 space-y-4">
         <div className="flex items-center gap-4">
