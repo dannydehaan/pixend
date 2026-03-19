@@ -24,12 +24,12 @@ class WorkspaceController extends Controller
     public function store(StoreWorkspaceRequest $request): WorkspaceResource
     {
         $payload = $request->validated();
-        $typeSlug = $request->input('workspace_type') ?? WorkspaceType::LOCAL;
-        $type = WorkspaceType::where('slug', $typeSlug)->first() ?? WorkspaceType::getDefaultType();
-        $syncEnabled = in_array($type->slug, [WorkspaceType::COMPANY, WorkspaceType::PREMIUM_PERSONAL], true);
+        $typeKey = $payload['type'] ?? 'local';
+        $type = WorkspaceType::where('slug', $typeKey)->first() ?? WorkspaceType::getDefaultType();
+        $syncEnabled = in_array($typeKey, ['company', 'premium'], true);
 
-        if ($type->requires_organization) {
-            $organizationId = $request->validated()['organization_id'] ?? null;
+        if ($typeKey === 'company') {
+            $organizationId = $payload['organization_id'] ?? null;
             $organization = Organization::where('id', $organizationId)
                 ->whereHas('users', fn ($query) => $query->where('users.id', $request->user()->id))
                 ->firstOrFail();
@@ -37,9 +37,9 @@ class WorkspaceController extends Controller
             $organization = null;
         }
 
-        if ($type->slug === WorkspaceType::PREMIUM_PERSONAL && ! $request->user()->is_premium) {
+        if ($typeKey === 'premium' && ! $request->user()->is_premium) {
             throw ValidationException::withMessages([
-                'workspace_type' => 'Premium personal workspaces require a premium account.',
+                'type' => 'Premium workspaces require a premium account.',
             ]);
         }
 
@@ -47,9 +47,10 @@ class WorkspaceController extends Controller
             'name' => $payload['name'],
             'slug' => $payload['slug'],
             'description' => $payload['description'] ?? null,
-            'type' => $type->slug,
+            'type' => $typeKey,
             'workspace_type_id' => $type->id,
             'owner_id' => $request->user()->id,
+            'organization_id' => $organization?->id,
             'sync_enabled' => $syncEnabled,
         ];
 
