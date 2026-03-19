@@ -3,7 +3,13 @@ import ReactDOM from "react-dom/client";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { type UserSummary } from "../../services/api";
-import { AuthProvider, type AuthStatus, type RefreshSessionOptions, useAuth } from "../AuthContext";
+import {
+  AuthProvider,
+  resetAuthValidationState,
+  type AuthStatus,
+  type RefreshSessionOptions,
+  useAuth,
+} from "../AuthContext";
 
 const navigateMock = vi.fn();
 
@@ -60,6 +66,16 @@ const flushMicrotasks = async () => {
   });
 };
 
+const createControlled = () => {
+  let resolve: (value: unknown) => void;
+  let reject: (reason?: unknown) => void;
+  const promise = new Promise((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve: resolve!, reject: reject! };
+};
+
 const renderAuth = () => {
   const container = document.createElement("div");
   const root = ReactDOM.createRoot(container);
@@ -98,6 +114,7 @@ const testUser: UserSummary = { id: 1, name: "Jane", email: "jane@example.com" }
 describe("AuthProvider", () => {
   beforeEach(() => {
     resetMocks();
+    resetAuthValidationState();
     latestStatus.current = null;
     latestUser.current = null;
   });
@@ -150,16 +167,6 @@ describe("AuthProvider", () => {
   it("ignores stale responses when a newer validation resolves first", async () => {
     mockApiClient.getPersistedToken.mockResolvedValue("token-123");
 
-    const createControlled = () => {
-      let resolve: (value: unknown) => void;
-      let reject: (reason?: unknown) => void;
-      const promise = new Promise((res, rej) => {
-        resolve = res;
-        reject = rej;
-      });
-      return { promise, resolve: resolve!, reject: reject! };
-    };
-
     const first = createControlled();
     const second = createControlled();
 
@@ -186,6 +193,42 @@ describe("AuthProvider", () => {
 
     await act(async () => {
       first.reject({ status: 401 });
+      await Promise.resolve();
+    });
+    await flushMicrotasks();
+
+    expect(latestStatus.current).toBe("authenticated");
+    expect(navigateMock).not.toHaveBeenCalled();
+
+    cleanup();
+  });
+
+  it("keeps the user authenticated if a later validation rejects after a prior success", async () => {
+    mockApiClient.getPersistedToken.mockResolvedValue("token-123");
+
+    const first = createControlled();
+    const second = createControlled();
+
+    mockApiClient.validateToken
+      .mockReturnValueOnce(first.promise)
+      .mockReturnValueOnce(second.promise);
+
+    const { cleanup } = renderAuth();
+    await flushMicrotasks();
+
+    act(() => {
+      refreshRef.current({ abortPrevious: false });
+    });
+    await flushMicrotasks();
+
+    await act(async () => {
+      first.resolve({ user: testUser });
+      await Promise.resolve();
+    });
+    await flushMicrotasks();
+
+    await act(async () => {
+      second.reject({ status: 401 });
       await Promise.resolve();
     });
     await flushMicrotasks();

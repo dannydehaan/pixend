@@ -119,6 +119,7 @@ describe("apiClient headers", () => {
   });
 
   it("always sends Accept application/json", async () => {
+    storeMock.get.mockResolvedValueOnce("token-123");
     ensureTauri();
 
     const fetchMock = mockFetchSuccess({ data: [] });
@@ -132,5 +133,16 @@ describe("apiClient headers", () => {
         headers: expect.objectContaining({ Accept: "application/json" }),
       }),
     );
+  });
+
+  it("fails fast when there is no stored token", async () => {
+    ensureTauri();
+    storeMock.get.mockResolvedValueOnce(null);
+
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(apiClient.fetchWorkspaces()).rejects.toThrow("Missing authentication token");
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

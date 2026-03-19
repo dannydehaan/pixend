@@ -15,6 +15,9 @@ interface AuthContextValue {
   user: UserSummary | null;
   token: string | null;
   status: AuthStatus;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  isUnauthenticated: boolean;
   login: (payload: LoginPayload) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<void>;
   logout: () => Promise<void>;
@@ -31,6 +34,22 @@ type ValidationOptions = {
 let sharedValidationPromise: Promise<void> | null = null;
 let sharedValidationController: AbortController | null = null;
 let validationSequence = 0;
+let initialValidationRequested = false;
+let lastSuccessfulValidationAt = 0;
+let lastHandledValidationSequence = 0;
+
+export const resetInitialValidationRequest = () => {
+  initialValidationRequested = false;
+};
+
+export const resetAuthValidationState = () => {
+  sharedValidationPromise = null;
+  sharedValidationController = null;
+  validationSequence = 0;
+  initialValidationRequested = false;
+  lastSuccessfulValidationAt = 0;
+  lastHandledValidationSequence = 0;
+};
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
@@ -43,6 +62,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     sharedValidationPromise = null;
     validationSequence += 1;
     sharedValidationController = null;
+    lastSuccessfulValidationAt = 0;
+    lastHandledValidationSequence = 0;
 
     await apiClient.clearToken();
     setToken(null);
@@ -108,14 +129,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const controller = new AbortController();
       sharedValidationController = controller;
       validationSequence += 1;
-      const currentSequence = validationSequence;
+      const requestSequence = validationSequence;
+      const requestStartAt = Date.now();
 
       setStatus("loading");
 
       const promise = (async () => {
         const stored = await apiClient.getPersistedToken();
         if (!stored) {
-          if (currentSequence === validationSequence) {
+          if (requestSequence >= lastHandledValidationSequence) {
+            lastHandledValidationSequence = requestSequence;
             setToken(null);
             setUser(null);
             setStatus("unauthenticated");
@@ -123,7 +146,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           return;
         }
 
-        if (currentSequence !== validationSequence) {
+        if (requestSequence < lastHandledValidationSequence) {
           return;
         }
 
@@ -131,22 +154,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         try {
           const response = await apiClient.validateToken({ signal: controller.signal });
-          if (currentSequence !== validationSequence) {
+          if (requestSequence < lastHandledValidationSequence) {
             return;
           }
 
           setUser(response.user);
           setStatus("authenticated");
+          lastSuccessfulValidationAt = Date.now();
+          lastHandledValidationSequence = Math.max(lastHandledValidationSequence, requestSequence);
         } catch (error) {
-          if (controller.signal.aborted || currentSequence !== validationSequence) {
+          if (controller.signal.aborted) {
+            return;
+          }
+
+          if (requestSequence < lastHandledValidationSequence) {
             return;
           }
 
           if ((error as Error & { status?: number }).status === 401) {
+            if (lastSuccessfulValidationAt >= requestStartAt) {
+              lastHandledValidationSequence = Math.max(lastHandledValidationSequence, requestSequence);
+              return;
+            }
             await handleInvalidToken();
           } else {
             setStatus("unauthenticated");
           }
+          lastHandledValidationSequence = Math.max(lastHandledValidationSequence, requestSequence);
         }
       })();
 
@@ -165,6 +199,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   );
 
   useEffect(() => {
+    if (initialValidationRequested) {
+      return;
+    }
+
+    initialValidationRequested = true;
     runValidation();
   }, [runValidation]);
 
@@ -174,9 +213,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     [runValidation],
   );
 
+  const isLoading = status === "loading";
+  const isAuthenticated = status === "authenticated";
+  const isUnauthenticated = status === "unauthenticated";
+
   const value = useMemo<AuthContextValue>(
-    () => ({ user, token, status, login, register, logout, refreshSession }),
-    [login, logout, register, refreshSession, status, token, user],
+    () => ({
+      user,
+      token,
+      status,
+      isLoading,
+      isAuthenticated,
+      isUnauthenticated,
+      login,
+      register,
+      logout,
+      refreshSession,
+    }),
+    [
+      login,
+      logout,
+      register,
+      refreshSession,
+      status,
+      token,
+      user,
+      isLoading,
+      isAuthenticated,
+      isUnauthenticated,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

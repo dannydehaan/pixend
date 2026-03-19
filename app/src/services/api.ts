@@ -103,9 +103,11 @@ const buildHeaders = async (includeAuth = true): Promise<HeadersInit> => {
 
   if (includeAuth) {
     const token = await getToken();
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
+    if (!token) {
+      throw new Error("Missing authentication token");
     }
+
+    headers.Authorization = `Bearer ${token}`;
   }
 
   return headers;
@@ -204,27 +206,42 @@ export type AuthResponse = {
 
 export const apiClient = {
   register(payload: RegisterPayload) {
-    return request<AuthResponse>("/auth/register", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    }, { auth: false });
+    return request<AuthResponse>(
+      "/auth/register",
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      },
+      { auth: false },
+    );
   },
 
   login(payload: LoginPayload) {
-    return request<AuthResponse>("/auth/login", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    }, { auth: false });
+    return request<AuthResponse>(
+      "/auth/login",
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      },
+      { auth: false },
+    );
   },
 
   logout() {
-    return request<void>("/auth/logout", {
-      method: "POST",
-    });
+    return request<void>(
+      "/auth/logout",
+      {
+        method: "POST",
+      },
+    );
   },
 
-  fetchWorkspaces() {
-    return request<{ data: Workspace[] }>("/workspaces", { method: "GET" }).then((data) => data.data);
+  fetchWorkspaces(options?: { signal?: AbortSignal }) {
+    return request<{ data: Workspace[] }>(
+      "/workspaces",
+      { method: "GET" },
+      { signal: options?.signal },
+    ).then((data) => data.data);
   },
 
   getPersistedToken() {

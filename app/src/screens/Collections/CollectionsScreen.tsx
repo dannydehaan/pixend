@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
-import { apiClient, Workspace } from "../../services/api";
+import { useMemo } from "react";
+import { Workspace } from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
+import { useWorkspaces } from "../../contexts/WorkspaceContext";
 
 const WorkspaceCard = ({ workspace }: { workspace: Workspace }) => (
   <article className="bg-surface-container-lowest border border-[#494454] rounded-2xl p-5 flex flex-col gap-3">
@@ -23,10 +24,8 @@ const WorkspaceCard = ({ workspace }: { workspace: Workspace }) => (
 );
 
 export const CollectionsScreen = () => {
-  const { user, status, logout } = useAuth();
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [statusMessage, setStatusMessage] = useState("");
+  const { status, logout } = useAuth();
+  const { workspaces, loading, error, refresh } = useWorkspaces();
 
   const badgeText = useMemo(() => {
     if (status === "authenticated") {
@@ -43,26 +42,6 @@ export const CollectionsScreen = () => {
     return "Connecting...";
   }, [status, workspaces.length]);
 
-  const fetchWorkspaces = async () => {
-    setLoading(true);
-    try {
-      const list = await apiClient.fetchWorkspaces();
-      setWorkspaces(list);
-      setStatusMessage("");
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Unable to load workspaces";
-      setStatusMessage(message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (status === "authenticated") {
-      fetchWorkspaces();
-    }
-  }, [status]);
-
   return (
     <div className="min-h-screen bg-background text-on-background font-body px-4 py-10">
       <div className="w-full max-w-5xl mx-auto grid gap-8 lg:grid-cols-2">
@@ -76,7 +55,7 @@ export const CollectionsScreen = () => {
             <span className={`w-2 h-2 rounded-full ${status === "authenticated" ? "bg-emerald-400" : "bg-amber-400"}`} />
             {badgeText}
           </div>
-          {statusMessage && <p className="text-sm text-error/80">{statusMessage}</p>}
+          {error && <p className="text-sm text-error/80">{error}</p>}
           <button onClick={logout} className="text-sm text-primary/80 hover:text-primary transition-colors">
             Disconnect
           </button>
@@ -87,7 +66,7 @@ export const CollectionsScreen = () => {
             <h2 className="text-lg font-semibold text-on-surface">Workspaces</h2>
             <button
               type="button"
-              onClick={fetchWorkspaces}
+              onClick={refresh}
               className="text-xs uppercase tracking-[0.4em] text-on-surface-variant hover:text-on-surface transition-colors"
               disabled={loading}
             >
