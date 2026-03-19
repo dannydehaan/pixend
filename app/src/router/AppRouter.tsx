@@ -3,6 +3,9 @@ import { useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { CollectionsScreen } from "../screens/Collections/CollectionsScreen";
 import { LoginScreen } from "../screens/Login/LoginScreen";
+import { RegisterScreen } from "../screens/Register/RegisterScreen";
+import { WorkspaceLayout } from "../layouts/WorkspaceLayout";
+import { ApiClientScreen } from "../screens/APIClient/APIClientScreen";
 
 const ProtectedRoute = () => {
   const { user, status, isGuest } = useAuth();
@@ -31,8 +34,12 @@ export const AppRouter = () => (
   <Routes>
     <Route path="/login" element={<LoginScreen />} />
     <Route element={<ProtectedRoute />}>
-      <Route path="/" element={<CollectionsScreen />} />
-      <Route path="/collections" element={<CollectionsScreen />} />
+      <Route element={<WorkspaceLayout />}>
+        <Route index element={<CollectionsScreen />} />
+        <Route path="collections" element={<CollectionsScreen />} />
+        <Route path="api-client" element={<ApiClientScreen />} />
+        <Route path="register" element={<RegisterScreen />} />
+      </Route>
     </Route>
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>
