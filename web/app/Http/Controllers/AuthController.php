@@ -25,10 +25,13 @@ class AuthController extends Controller
      */
     public function register(RegisterRequest $request): JsonResponse
     {
+        $salt = base64_encode(random_bytes(16));
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'encryption_salt' => $salt,
         ]);
 
         $workspaceType = WorkspaceType::firstWhere('slug', WorkspaceType::PREMIUM) ?? WorkspaceType::getDefaultType();
@@ -63,7 +66,7 @@ class AuthController extends Controller
         $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json([
-            'user' => $user,
+            'user' => new UserResource($user),
             'token' => $token,
         ], 201);
     }
@@ -89,10 +92,15 @@ class AuthController extends Controller
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
+        if (! $user->encryption_salt) {
+            $user->encryption_salt = base64_encode(random_bytes(16));
+            $user->saveQuietly();
+        }
+
         $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json([
-            'user' => $user,
+            'user' => new UserResource($user),
             'token' => $token,
         ]);
     }

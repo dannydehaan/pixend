@@ -8,6 +8,8 @@ import {
   setUnauthorizedHandler,
 } from "../services/api";
 import { getGuestMode, setGuestMode } from "../services/guestSession";
+import { deriveKeyFromPassword } from "../utils/keyDerivation";
+import { ensureGuestKey } from "../services/guestKey";
 
 export type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
@@ -21,6 +23,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   isUnauthenticated: boolean;
   isGuest: boolean;
+  encryptionKey: CryptoKey | null;
   login: (payload: LoginPayload) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<void>;
   logout: () => Promise<void>;
@@ -61,6 +64,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<UserSummary | null>(null);
   const [status, setStatus] = useState<AuthStatus>("loading");
   const [isGuest, setIsGuest] = useState<boolean>(() => getGuestMode());
+  const [encryptionKey, setEncryptionKey] = useState<CryptoKey | null>(null);
 
   const clearSession = useCallback(async () => {
     sharedValidationController?.abort();
@@ -76,6 +80,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setStatus("unauthenticated");
     setIsGuest(false);
     setGuestMode(false);
+    setEncryptionKey(null);
   }, []);
 
   const redirectToLogin = useCallback(() => {
@@ -102,6 +107,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setToken(result.token);
       setUser(result.user);
       setStatus("authenticated");
+      if (!result.user.encryption_salt) {
+        throw new Error("Missing encryption salt");
+      }
+      const derivedKey = await deriveKeyFromPassword(payload.password, result.user.encryption_salt);
+      setEncryptionKey(derivedKey);
       navigate("/collections", { replace: true });
       window.dispatchEvent(new Event("pixend:refresh-workspaces"));
     },
@@ -132,6 +142,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await clearSession();
     setIsGuest(true);
     setGuestMode(true);
+    const guestKey = await ensureGuestKey();
+    setEncryptionKey(guestKey);
     navigate("/collections", { replace: true });
   }, [clearSession, navigate]);
 
@@ -257,6 +269,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       logout,
       refreshSession,
       continueAsGuest,
+      encryptionKey,
     }),
     [
       login,
@@ -270,6 +283,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       isAuthenticated,
       isUnauthenticated,
       isGuest,
+      encryptionKey,
       continueAsGuest,
     ],
   );

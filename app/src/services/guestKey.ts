@@ -1,10 +1,10 @@
-const GUEST_KEY_STORAGE = 'guest_key';
+import { deleteSecureValue, getSecureValue, setSecureValue } from "../utils/secureStorage";
 
-const isBrowser = () => typeof window !== 'undefined';
+const GUEST_KEY_NAME = "guest-encryption-key";
 
 const arrayBufferToBase64 = (buffer: ArrayBuffer) => {
   const bytes = new Uint8Array(buffer);
-  let binary = '';
+  let binary = "";
   for (let i = 0; i < bytes.length; i += 1) {
     binary += String.fromCharCode(bytes[i]);
   }
@@ -21,18 +21,16 @@ const base64ToArrayBuffer = (value: string) => {
 };
 
 export async function persistGuestKey(key: CryptoKey): Promise<void> {
-  if (!isBrowser()) return;
-  const raw = await crypto.subtle.exportKey('raw', key);
+  const raw = await crypto.subtle.exportKey("raw", key);
   const serialized = arrayBufferToBase64(raw);
-  window.localStorage.setItem(GUEST_KEY_STORAGE, serialized);
+  await setSecureValue(GUEST_KEY_NAME, serialized);
 }
 
 export async function loadGuestKey(): Promise<CryptoKey | null> {
-  if (!isBrowser()) return null;
-  const stored = window.localStorage.getItem(GUEST_KEY_STORAGE);
+  const stored = await getSecureValue(GUEST_KEY_NAME);
   if (!stored) return null;
   const buffer = base64ToArrayBuffer(stored);
-  return crypto.subtle.importKey('raw', buffer, 'AES-GCM', false, ['encrypt', 'decrypt']);
+  return crypto.subtle.importKey("raw", buffer, "AES-GCM", false, ["encrypt", "decrypt"]);
 }
 
 export async function ensureGuestKey(): Promise<CryptoKey> {
@@ -42,16 +40,15 @@ export async function ensureGuestKey(): Promise<CryptoKey> {
   }
 
   const generated = await crypto.subtle.generateKey(
-    { name: 'AES-GCM', length: 256 },
+    { name: "AES-GCM", length: 256 },
     true,
-    ['encrypt', 'decrypt'],
+    ["encrypt", "decrypt"],
   );
 
   await persistGuestKey(generated);
   return generated;
 }
 
-export function clearGuestKey(): void {
-  if (!isBrowser()) return;
-  window.localStorage.removeItem(GUEST_KEY_STORAGE);
+export async function clearGuestKey(): Promise<void> {
+  await deleteSecureValue(GUEST_KEY_NAME);
 }

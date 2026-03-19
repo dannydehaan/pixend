@@ -219,6 +219,7 @@ export type UserSummary = {
   name: string;
   email: string;
   is_premium?: boolean;
+  encryption_salt?: string | null;
 };
 
 export type WorkspaceType = {
