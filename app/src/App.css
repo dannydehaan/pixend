@@ -15,6 +15,12 @@
   --border: #1a1a1a;
   --primary-hover: #ff5a26;
   --text-on-primary: #ffffff;
+  --response-key: #e84c1b;
+  --response-value: #ffffff;
+  --response-string: #ffffff;
+  --response-number: #f5a97f;
+  --response-boolean: #ffb86c;
+  --response-null: #888888;
   background-color: var(--background);
   color: var(--text);
 }
@@ -92,4 +98,35 @@ body {
 
 .send-button:hover:not(:disabled) {
   background-color: var(--primary-hover);
+}
+
+.response-body {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: pre;
+}
+
+.response-line {
+  white-space: pre;
+}
+
+.json-key {
+  color: var(--response-key);
+}
+
+.json-string {
+  color: var(--response-string);
+}
+
+.json-number {
+  color: var(--response-number);
+}
+
+.json-boolean {
+  color: var(--response-boolean);
+}
+
+.json-null {
+  color: var(--response-null);
 }

@@ -8,44 +8,65 @@ type ResponseViewerProps = {
 };
 
 const ResponseViewer = ({ response, isLoading, errorMessage }: ResponseViewerProps) => {
-  const prettyBody = useMemo(() => {
+  const parsedJson = useMemo(() => {
     if (!response?.body) {
-      return "";
+      return null;
     }
 
     try {
-      const parsed = JSON.parse(response.body);
-      return JSON.stringify(parsed, null, 2);
+      return JSON.parse(response.body);
     } catch (err) {
-      return response.body;
+      return null;
     }
-  }, [response]);
+  }, [response?.body]);
+
+  const prettyBody = useMemo(() => {
+    if (parsedJson) {
+      return JSON.stringify(parsedJson, null, 2);
+    }
+    return response?.body ?? "";
+  }, [parsedJson, response?.body]);
 
   const headerEntries = useMemo(() => (response ? Object.entries(response.headers) : []), [response]);
 
+  const escapeHtml = (value: string) =>
+    value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  const highlightLine = (line: string) => {
+    let highlighted = escapeHtml(line);
+    highlighted = highlighted.replace(/(\s*)"([^"]+)":/g, `$1<span class="json-key">"$2"</span>:`);
+    highlighted = highlighted.replace(/: "([^"]*)"(,?)/g, `: <span class="json-string">"$1"</span>$2`);
+    highlighted = highlighted.replace(/: (-?\d+(?:\.\d+)?)(,?)/g, `: <span class="json-number">$1</span>$2`);
+    highlighted = highlighted.replace(/: (true|false)(,?)/g, `: <span class="json-boolean">$1</span>$2`);
+    highlighted = highlighted.replace(/: null(,?)/g, `: <span class="json-null">null</span>$1`);
+    return highlighted;
+  };
+
+  const jsonLines = prettyBody ? prettyBody.split("\n") : ["[empty response body]"];
+
   return (
-    <section className="space-y-4 rounded-2xl border border-[#494454]/30 bg-surface-container-highest p-6">
+    <section className="space-y-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xs font-semibold uppercase tracking-[0.4em] text-on-surface-variant">Response</h2>
-          {isLoading && <p className="text-[11px] text-on-surface-variant">Sending request…</p>}
+          <h2 className="text-xs font-semibold uppercase tracking-[0.4em] text-[var(--muted)]">Response</h2>
+          {isLoading && <p className="text-[11px] text-[var(--muted)]">Sending request…</p>}
           {errorMessage && <p className="text-[11px] text-error font-semibold">{errorMessage}</p>}
         </div>
-        <div className="flex flex-col items-end text-xs uppercase tracking-[0.35em] text-on-surface-variant">
+        <div className="flex flex-col items-end text-xs uppercase tracking-[0.35em] text-[var(--muted)]">
           <span>{response ? `Status ${response.status}` : "Awaiting response"}</span>
           {response && (
-            <span className="text-[10px] text-on-surface-variant">
-              Time: {response.duration} ms
-            </span>
-          )}
-        </div>
+          <span className="text-[10px] text-[var(--muted)]">
+            Time: {response.duration} ms
+          </span>
+        )}
+      </div>
       </div>
       {response ? (
         <div className="space-y-4">
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="space-y-1">
               <p className="text-[10px] uppercase tracking-[0.35em] text-on-surface-variant">Headers</p>
-              <div className="rounded-2xl border border-outline-variant/30 bg-[#0b1326] p-3 text-xs text-on-surface-variant">
+              <div className="rounded-2xl border border-[var(--border)] bg-[var(--background)] p-3 text-xs text-[var(--text)]">
                 {headerEntries.length ? (
                   <div className="space-y-1">
                     {headerEntries.map(([key, value]) => (
@@ -62,9 +83,15 @@ const ResponseViewer = ({ response, isLoading, errorMessage }: ResponseViewerPro
             </div>
             <div className="space-y-1">
               <p className="text-[10px] uppercase tracking-[0.35em] text-on-surface-variant">Body</p>
-              <div className="max-h-64 overflow-auto rounded-2xl border border-outline-variant/30 bg-[#0b1326] p-3 text-xs text-on-surface-variant">
-                <pre className="whitespace-pre-wrap font-mono text-[11px] text-on-surface">
-                  {prettyBody || "[empty response body]"}
+              <div className="max-h-64 overflow-auto rounded-2xl border border-[var(--border)] bg-[var(--background)] p-3 text-xs text-[var(--text)]">
+                <pre className="response-body">
+                  {jsonLines.map((line, index) => (
+                    <div
+                      key={index}
+                      className="response-line"
+                      dangerouslySetInnerHTML={{ __html: highlightLine(line || "[empty response body]") }}
+                    />
+                  ))}
                 </pre>
               </div>
             </div>

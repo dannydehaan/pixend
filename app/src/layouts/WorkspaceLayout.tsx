@@ -164,9 +164,6 @@ export const WorkspaceLayout = () => {
                   Login / Upgrade
                 </button>
               )}
-              <button className="bg-[var(--primary)] text-[var(--text)] px-5 py-1.5 rounded-lg text-sm font-bold active:scale-95 transition-all">
-                Send
-              </button>
             </div>
           </div>
         </header>

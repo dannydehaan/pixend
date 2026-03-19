@@ -12,6 +12,12 @@ export type Theme = {
     border: string;
     primaryHover: string;
     textOnPrimary: string;
+    responseKey: string;
+    responseValue: string;
+    responseString: string;
+    responseNumber: string;
+    responseBoolean: string;
+    responseNull: string;
   };
 };
 
@@ -28,6 +34,12 @@ export const THEMES: Theme[] = [
       border: "#1a1a1a",
       primaryHover: "#ff5a26",
       textOnPrimary: "#ffffff",
+      responseKey: "#e84c1b",
+      responseValue: "#ffffff",
+      responseString: "#ffffff",
+      responseNumber: "#f5a97f",
+      responseBoolean: "#ffb86c",
+      responseNull: "#888888",
     },
   },
   {
@@ -42,6 +54,12 @@ export const THEMES: Theme[] = [
       border: "#44475a",
       primaryHover: "#d7b4ff",
       textOnPrimary: "#ffffff",
+      responseKey: "#bd93f9",
+      responseValue: "#f8f8f2",
+      responseString: "#f5a97f",
+      responseNumber: "#8be9fd",
+      responseBoolean: "#50fa7b",
+      responseNull: "#6272a4",
     },
   },
   {
@@ -56,6 +74,12 @@ export const THEMES: Theme[] = [
       border: "#3e3d32",
       primaryHover: "#ff4f8f",
       textOnPrimary: "#ffffff",
+      responseKey: "#f92672",
+      responseValue: "#f8f8f2",
+      responseString: "#ff79c6",
+      responseNumber: "#fd971f",
+      responseBoolean: "#ae81ff",
+      responseNull: "#75715e",
     },
   },
   {
@@ -70,6 +94,12 @@ export const THEMES: Theme[] = [
       border: "#4c566a",
       primaryHover: "#a0d0e0",
       textOnPrimary: "#0f1111",
+      responseKey: "#88c0d0",
+      responseValue: "#eceff4",
+      responseString: "#8fbcbb",
+      responseNumber: "#ebcb8b",
+      responseBoolean: "#a3be8c",
+      responseNull: "#4c566a",
     },
   },
   {
@@ -84,6 +114,12 @@ export const THEMES: Theme[] = [
       border: "#073642",
       primaryHover: "#dcb14f",
       textOnPrimary: "#ffffff",
+      responseKey: "#b58900",
+      responseValue: "#839496",
+      responseString: "#b58900",
+      responseNumber: "#cb4b16",
+      responseBoolean: "#2aa198",
+      responseNull: "#586e75",
     },
   },
   {
@@ -98,6 +134,12 @@ export const THEMES: Theme[] = [
       border: "#003300",
       primaryHover: "#00ff7f",
       textOnPrimary: "#000000",
+      responseKey: "#00ff00",
+      responseValue: "#00ff00",
+      responseString: "#aaffaa",
+      responseNumber: "#66ff66",
+      responseBoolean: "#55ff55",
+      responseNull: "#008f00",
     },
   },
   {
@@ -112,6 +154,12 @@ export const THEMES: Theme[] = [
       border: "#e5e5e5",
       primaryHover: "#4c8cf0",
       textOnPrimary: "#ffffff",
+      responseKey: "#2563eb",
+      responseValue: "#111111",
+      responseString: "#60a5fa",
+      responseNumber: "#7dd3fc",
+      responseBoolean: "#34d399",
+      responseNull: "#94a3b8",
     },
   },
 ];
