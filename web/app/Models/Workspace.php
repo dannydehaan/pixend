@@ -19,4 +19,9 @@ class Workspace extends Model
     {
         return $this->belongsToMany(User::class);
     }
+
+    public function collections(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Collection::class);
+    }
 }

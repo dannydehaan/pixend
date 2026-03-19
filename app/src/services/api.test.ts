@@ -135,6 +135,38 @@ describe("apiClient headers", () => {
     );
   });
 
+  it("can load the collection overview payload", async () => {
+    storeMock.get.mockResolvedValueOnce("token-123");
+    ensureTauri();
+
+    const mockPayload = {
+      data: {
+        hero: {
+          name: "Project Alpha API",
+          version: "v1.0.4",
+          description: "desc",
+          endpoint_count: 3,
+          updated_at: new Date().toISOString(),
+          access_level: "public",
+          status: "operational",
+        },
+        endpoints: [],
+        quick_specs: {
+          base_url: "https://api.alpha.pixend.io",
+          authentication: "Bearer token via /auth/login",
+          response_formats: [],
+          health: "Healthy",
+        },
+      },
+    };
+
+    const fetchMock = mockFetchSuccess(mockPayload);
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await apiClient.fetchCollectionOverview();
+    expect(result).toEqual(mockPayload.data);
+  });
+
   it("fails fast when there is no stored token", async () => {
     ensureTauri();
     storeMock.get.mockResolvedValueOnce(null);

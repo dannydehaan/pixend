@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CollectionOverviewController;
 use App\Http\Controllers\WorkspaceController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -20,6 +21,7 @@ Route::prefix('1.0')->group(function () {
                 'user' => $request->user()?->only('id', 'email'),
             ];
         });
+        Route::get('collections/overview', [CollectionOverviewController::class, 'show']);
         Route::get('workspaces', [WorkspaceController::class, 'index']);
         Route::post('workspaces', [WorkspaceController::class, 'store']);
         Route::post('workspaces/{workspace}/users', [WorkspaceController::class, 'attachUser']);

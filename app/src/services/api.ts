@@ -187,6 +187,37 @@ export type Workspace = {
   users?: UserSummary[];
 };
 
+export type CollectionOverviewEndpoint = {
+  id: number;
+  name: string;
+  method: string;
+  route: string;
+  description: string;
+  category: string | null;
+  cache: string | null;
+  priority: string | null;
+  access: string | null;
+};
+
+export type CollectionOverviewResponse = {
+  hero: {
+    name: string;
+    version: string;
+    description: string;
+    endpoint_count: number;
+    updated_at: string | null;
+    access_level: string;
+    status: string;
+  };
+  endpoints: CollectionOverviewEndpoint[];
+  quick_specs: {
+    base_url: string;
+    authentication: string;
+    response_formats: { name: string; label: string }[];
+    health: string;
+  };
+};
+
 export type RegisterPayload = {
   name: string;
   email: string;
@@ -234,6 +265,13 @@ export const apiClient = {
         method: "POST",
       },
     );
+  },
+
+  fetchCollectionOverview() {
+    return request<{ data: CollectionOverviewResponse }>(
+      "/collections/overview",
+      { method: "GET" },
+    ).then((data) => data.data);
   },
 
   fetchWorkspaces(options?: { signal?: AbortSignal }) {

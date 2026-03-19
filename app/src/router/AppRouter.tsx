@@ -1,6 +1,6 @@
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { CollectionsScreen } from "../screens/Collections/CollectionsScreen";
+import { CollectionOverviewScreen } from "../screens/CollectionOverview/CollectionOverviewScreen";
 import { LoginScreen } from "../screens/Login/LoginScreen";
 
 const ProtectedRoute = () => {
@@ -21,8 +21,8 @@ export const AppRouter = () => (
   <Routes>
     <Route path="/login" element={<LoginScreen />} />
     <Route element={<ProtectedRoute />}>
-      <Route path="/" element={<CollectionsScreen />} />
-      <Route path="/collections" element={<CollectionsScreen />} />
+      <Route path="/" element={<CollectionOverviewScreen />} />
+      <Route path="/collections" element={<CollectionOverviewScreen />} />
     </Route>
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>
