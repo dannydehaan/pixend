@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\UserResource;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Models\User;
@@ -73,6 +74,13 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Logged out',
             'user' => $user?->only('id', 'email'),
+        ]);
+    }
+
+    public function me(Request $request): JsonResponse
+    {
+        return response()->json([
+            'data' => new UserResource($request->user()),
         ]);
     }
 }
