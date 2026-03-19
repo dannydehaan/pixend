@@ -7,6 +7,7 @@ import {
   UserSummary,
   setUnauthorizedHandler,
 } from "../services/api";
+import { getGuestMode, setGuestMode } from "../services/guestSession";
 
 export type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
@@ -19,10 +20,12 @@ interface AuthContextValue {
   isLoading: boolean;
   isAuthenticated: boolean;
   isUnauthenticated: boolean;
+  isGuest: boolean;
   login: (payload: LoginPayload) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<void>;
   logout: () => Promise<void>;
   refreshSession: (options?: RefreshSessionOptions) => Promise<void>;
+  continueAsGuest: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -57,6 +60,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<UserSummary | null>(null);
   const [status, setStatus] = useState<AuthStatus>("loading");
+  const [isGuest, setIsGuest] = useState<boolean>(() => getGuestMode());
 
   const clearSession = useCallback(async () => {
     sharedValidationController?.abort();
@@ -78,11 +82,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const handleInvalidToken = useCallback(async () => {
     await clearSession();
+    setIsGuest(false);
+    setGuestMode(false);
     redirectToLogin();
   }, [clearSession, redirectToLogin]);
 
   const authenticate = useCallback(
     async (payload: LoginPayload | RegisterPayload, action: "login" | "register") => {
+      setGuestMode(false);
+      setIsGuest(false);
       const result =
         action === "login"
           ? await apiClient.login(payload as LoginPayload)
@@ -116,6 +124,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await handleInvalidToken();
     }
   }, [handleInvalidToken]);
+
+  const continueAsGuest = useCallback(async () => {
+    await clearSession();
+    setIsGuest(true);
+    setGuestMode(true);
+    navigate("/collections", { replace: true });
+  }, [clearSession, navigate]);
 
   const runValidation = useCallback(
     async ({ force = false, abortPrevious = true }: ValidationOptions = {}) => {
@@ -233,10 +248,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       isLoading,
       isAuthenticated,
       isUnauthenticated,
+      isGuest,
       login,
       register,
       logout,
       refreshSession,
+      continueAsGuest,
     }),
     [
       login,
@@ -249,6 +266,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       isLoading,
       isAuthenticated,
       isUnauthenticated,
+      isGuest,
+      continueAsGuest,
     ],
   );
 

@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import { apiClient, Workspace } from "../services/api";
+import { loadGuestWorkspace } from "../services/guestStorage";
 import { useAuth } from "./AuthContext";
 
 interface WorkspaceContextValue {
@@ -20,15 +21,14 @@ interface WorkspaceContextValue {
 const WorkspaceContext = createContext<WorkspaceContextValue | undefined>(undefined);
 
 export const WorkspacesProvider = ({ children }: { children: React.ReactNode }) => {
-  const { status, isAuthenticated } = useAuth();
+  const { status, isAuthenticated, isGuest } = useAuth();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const requestIdRef = useRef(0);
   const controllerRef = useRef<AbortController | null>(null);
-  const initialLoadRef = useRef(false);
 
-  const loadWorkspaces = useCallback(async () => {
+  const loadRemoteWorkspaces = useCallback(async () => {
     if (!isAuthenticated) {
       return;
     }
@@ -63,29 +63,56 @@ export const WorkspacesProvider = ({ children }: { children: React.ReactNode }) 
     }
   }, [isAuthenticated]);
 
+  const loadLocalWorkspaces = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const workspace = await loadGuestWorkspace();
+      setWorkspaces([workspace]);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unable to load guest workspace";
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const loadWorkspaces = useCallback(async () => {
+    controllerRef.current?.abort();
+
+    if (isGuest) {
+      await loadLocalWorkspaces();
+      return;
+    }
+
+    if (isAuthenticated) {
+      await loadRemoteWorkspaces();
+      return;
+    }
+
+    setWorkspaces([]);
+    setError(null);
+    setLoading(false);
+  }, [isGuest, isAuthenticated, loadLocalWorkspaces, loadRemoteWorkspaces]);
+
   const refresh = useCallback(() => loadWorkspaces(), [loadWorkspaces]);
 
   useEffect(() => {
-    if (status !== "authenticated" || !isAuthenticated) {
+    if (status === "loading") {
       return;
     }
 
-    if (initialLoadRef.current) {
-      return;
-    }
-
-    initialLoadRef.current = true;
     void loadWorkspaces();
-  }, [status, isAuthenticated, loadWorkspaces]);
+  }, [status, loadWorkspaces]);
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      initialLoadRef.current = false;
+    if (status === "unauthenticated" && !isGuest && !isAuthenticated) {
       setWorkspaces([]);
       setError(null);
       setLoading(false);
     }
-  }, [status]);
+  }, [status, isGuest, isAuthenticated]);
 
   useEffect(() => {
     return () => {
@@ -108,4 +135,3 @@ export const useWorkspaces = () => {
   }
   return context;
 };
-

@@ -5,15 +5,13 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreCollectionRequest;
 use App\Http\Resources\CollectionResource;
 use App\Models\Collection;
-use App\Models\Workspace;
+use App\Services\WorkspaceAccessService;
 
 class CollectionController extends Controller
 {
-    public function store(StoreCollectionRequest $request)
+    public function store(StoreCollectionRequest $request, WorkspaceAccessService $accessService)
     {
-        $workspace = Workspace::where('id', $request->workspace_id)
-            ->whereHas('users', fn ($query) => $query->where('user_id', $request->user()->id))
-            ->firstOrFail();
+        $workspace = $accessService->resolveWorkspaceForUser($request->workspace_id, $request->user());
 
         $collection = $workspace->collections()->create([
             'name' => $request->name,

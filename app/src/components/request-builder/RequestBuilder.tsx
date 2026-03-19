@@ -14,9 +14,9 @@ const RequestBuilder = () => {
     <div className="bg-surface text-on-surface h-screen flex flex-col overflow-hidden">
       <header className="flex justify-between items-center w-full px-6 h-16 backdrop-blur-xl bg-opacity-80 bg-[#0b1326] z-50 shrink-0">
         <div className="flex items-center gap-8">
-          <span className="text-xl font-black tracking-tighter text-[#d0bcff] uppercase">Pixend</span>
+          <span className="text-xl font-black tracking-tighter text-[#e84c1b] uppercase">Pixend</span>
           <nav className="hidden md:flex items-center gap-6">
-            <a className="text-[#d0bcff] font-bold border-b-2 border-[#d0bcff] pb-1 font-['Inter'] tracking-tight text-sm uppercase" href="#">
+            <a className="text-[#e84c1b] font-bold border-b-2 border-[#e84c1b] pb-1 font-['Inter'] tracking-tight text-sm uppercase" href="#">
               Workspace
             </a>
             <a className="text-[#dae2fd]/60 font-medium hover:bg-[#222a3d] transition-colors duration-200 px-2 py-1 rounded font-['Inter'] tracking-tight text-sm uppercase" href="#">
@@ -51,7 +51,7 @@ const RequestBuilder = () => {
           <div className="p-4 flex flex-col gap-4">
             <div className="flex items-center justify-between mb-2">
               <div>
-                <h2 className="font-['Inter'] text-xs font-semibold uppercase tracking-widest text-[#d0bcff]">Project Alpha</h2>
+                <h2 className="font-['Inter'] text-xs font-semibold uppercase tracking-widest text-[#e84c1b]">Project Alpha</h2>
                 <p className="text-[10px] text-on-surface-variant/60 font-medium uppercase tracking-tighter">Engineering Team</p>
               </div>
               <div className="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center overflow-hidden">
@@ -70,13 +70,13 @@ const RequestBuilder = () => {
                 type="text"
               />
             </div>
-            <button className="w-full flex items-center justify-center gap-2 py-2.5 bg-surface-container-highest text-[#d0bcff] text-xs font-bold rounded-lg border border-primary/20 hover:bg-primary/10 transition-all">
+            <button className="w-full flex items-center justify-center gap-2 py-2.5 bg-surface-container-highest text-[#e84c1b] text-xs font-bold rounded-lg border border-primary/20 hover:bg-primary/10 transition-all">
               <span className="material-symbols-outlined text-sm">add_circle</span>
               <span>New Collection</span>
             </button>
           </div>
           <nav className="flex-1 overflow-y-auto px-2 py-2 space-y-1">
-            <div className="bg-[#222a3d] text-[#d0bcff] border-r-2 border-[#d0bcff] flex items-center gap-3 px-3 py-2.5 rounded-l-md transition-transform cursor-pointer">
+            <div className="bg-[#222a3d] text-[#e84c1b] border-r-2 border-[#e84c1b] flex items-center gap-3 px-3 py-2.5 rounded-l-md transition-transform cursor-pointer">
               <span className="material-symbols-outlined text-lg">folder_open</span>
               <span className="font-['Inter'] text-xs font-semibold uppercase tracking-widest">Collections</span>
             </div>
@@ -205,7 +205,7 @@ const RequestBuilder = () => {
         <aside className="hidden lg:flex w-72 h-full bg-[#131b2e] border-l border-[#494454]/10 flex-col overflow-y-auto">
           <div className="p-6 space-y-8">
             <div>
-              <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#d0bcff] mb-4">Request Context</h3>
+              <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#e84c1b] mb-4">Request Context</h3>
               <div className="space-y-4">
                 <div className="bg-surface-container-high p-4 rounded-xl">
                   <p className="text-[10px] font-medium text-on-surface-variant/60 uppercase mb-2">Environment</p>
@@ -225,7 +225,7 @@ const RequestBuilder = () => {
             </div>
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#d0bcff]">History</h3>
+                <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#e84c1b]">History</h3>
                 <span className="text-[10px] text-on-surface-variant/40 hover:text-primary cursor-pointer transition-colors">Clear All</span>
               </div>
               <div className="space-y-2">

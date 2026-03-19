@@ -39,7 +39,7 @@ return new class extends Migration
                 'updated_at' => now(),
             ],
             [
-                'slug' => 'premium_personal',
+                'slug' => 'premium',
                 'name' => 'Premium Personal Workspace',
                 'description' => 'Synced personal workspace reserved for premium subscribers.',
                 'sync_enabled' => true,

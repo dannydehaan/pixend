@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\Collection;
+use App\Services\WorkspaceAccessService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -14,11 +15,19 @@ class StoreEnvironmentRequest extends FormRequest
             return false;
         }
 
-        $collectionId = (int) $this->input('collection_id');
+        $collection = Collection::with('workspace')->find($this->input('collection_id'));
 
-        return Collection::where('collections.id', $collectionId)
-            ->whereHas('workspace.users', fn ($query) => $query->where('users.id', $this->user()->id))
-            ->exists();
+        if (! $collection) {
+            return false;
+        }
+
+        try {
+            app(WorkspaceAccessService::class)->resolveWorkspaceForUser($collection->workspace_id, $this->user());
+        } catch (\Throwable) {
+            return false;
+        }
+
+        return true;
     }
 
     public function rules(): array

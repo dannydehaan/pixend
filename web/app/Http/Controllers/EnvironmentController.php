@@ -5,14 +5,15 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreEnvironmentRequest;
 use App\Http\Resources\EnvironmentResource;
 use App\Models\Collection;
+use App\Services\WorkspaceAccessService;
 
 class EnvironmentController extends Controller
 {
-    public function store(StoreEnvironmentRequest $request)
+    public function store(StoreEnvironmentRequest $request, WorkspaceAccessService $accessService)
     {
-        $collection = Collection::where('id', $request->collection_id)
-            ->whereHas('workspace.users', fn ($query) => $query->where('user_workspace.user_id', $request->user()->id))
-            ->firstOrFail();
+        $collection = Collection::with('workspace')->findOrFail($request->collection_id);
+
+        $accessService->resolveWorkspaceForUser($collection->workspace_id, $request->user());
 
         $environment = $collection->environments()->create([
             'name' => $request->name,

@@ -1,4 +1,5 @@
 import { Store } from "@tauri-apps/plugin-store";
+import { isGuestMode } from "./guestSession";
 
 let apiBaseOverride: string | null = null;
 export const setApiBase = (value: string) => {
@@ -132,6 +133,9 @@ const request = async <T>(
   init: RequestInit = {},
   opts: RequestOpts = {},
 ): Promise<T> => {
+  if (isGuestMode()) {
+    throw new Error("Guest mode disables API requests");
+  }
   const includeAuth = opts.auth ?? true;
   const apiBase = ensureApiBase();
   const key = createRequestKey(path, init, opts);

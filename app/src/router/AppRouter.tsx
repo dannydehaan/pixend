@@ -4,13 +4,13 @@ import { CollectionsScreen } from "../screens/Collections/CollectionsScreen";
 import { LoginScreen } from "../screens/Login/LoginScreen";
 
 const ProtectedRoute = () => {
-  const { user, status } = useAuth();
+  const { user, status, isGuest } = useAuth();
 
   if (status === "loading") {
     return <div className="text-center text-sm text-on-surface-variant">Validating session...</div>;
   }
 
-  if (status === "unauthenticated" || !user) {
+  if (!isGuest && (status === "unauthenticated" || !user)) {
     return <Navigate to="/login" replace />;
   }
 

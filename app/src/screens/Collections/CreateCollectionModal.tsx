@@ -1,6 +1,8 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { apiClient, CreateCollectionPayload } from "../../services/api";
+import { useAuth } from "../../contexts/AuthContext";
 import { useWorkspaces } from "../../contexts/WorkspaceContext";
+import { addGuestCollection } from "../../services/guestStorage";
 
 type Props = {
   open: boolean;
@@ -10,6 +12,7 @@ type Props = {
 
 export const CreateCollectionModal = ({ open, onClose, onSuccess }: Props) => {
   const { workspaces } = useWorkspaces();
+  const { isGuest } = useAuth();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [workspaceId, setWorkspaceId] = useState<number | null>(null);
@@ -50,7 +53,15 @@ export const CreateCollectionModal = ({ open, onClose, onSuccess }: Props) => {
     };
 
     try {
-      await apiClient.createCollection(payload);
+      if (isGuest) {
+        await addGuestCollection({
+          workspaceId,
+          name: payload.name,
+          description: payload.description,
+        });
+      } else {
+        await apiClient.createCollection(payload);
+      }
       onSuccess();
     } catch (error) {
       const typed = error as Error & { details?: Record<string, string[]> };

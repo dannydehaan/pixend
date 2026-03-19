@@ -11,7 +11,7 @@ class WorkspaceType extends Model
 
     public const LOCAL = 'local';
     public const COMPANY = 'company';
-    public const PREMIUM_PERSONAL = 'premium_personal';
+    public const PREMIUM = 'premium';
 
     protected $fillable = [
         'slug',

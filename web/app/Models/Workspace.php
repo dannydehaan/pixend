@@ -51,4 +51,19 @@ class Workspace extends Model
     {
         return $this->belongsTo(User::class, 'owner_id');
     }
+
+    public function isLocal(): bool
+    {
+        return $this->type === WorkspaceType::LOCAL;
+    }
+
+    public function isCompany(): bool
+    {
+        return $this->type === WorkspaceType::COMPANY;
+    }
+
+    public function isPremium(): bool
+    {
+        return $this->type === WorkspaceType::PREMIUM;
+    }
 }

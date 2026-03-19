@@ -1,9 +1,9 @@
 const TopNav = () => (
   <header className="sticky top-0 z-50 flex justify-between items-center w-full px-6 h-16 backdrop-blur-xl bg-[#0b1326] bg-opacity-80 border-none">
     <div className="flex items-center gap-8">
-      <span className="text-xl font-black tracking-tighter text-[#d0bcff] uppercase">Pixend</span>
+      <span className="text-xl font-black tracking-tighter text-[#e84c1b] uppercase">Pixend</span>
       <nav className="hidden lg:flex items-center gap-6">
-        <a className="font-['Inter'] tracking-tight text-sm font-bold text-[#d0bcff] border-b-2 border-[#d0bcff] pb-1" href="#">
+        <a className="font-['Inter'] tracking-tight text-sm font-bold text-[#e84c1b] border-b-2 border-[#e84c1b] pb-1" href="#">
           Workspace
         </a>
         <a className="font-['Inter'] tracking-tight text-sm font-medium text-[#dae2fd]/60 hover:text-[#dae2fd] transition-colors" href="#">

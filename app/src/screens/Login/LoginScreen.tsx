@@ -12,7 +12,7 @@ const initialForm = {
 type AuthMode = "login" | "register";
 
 export const LoginScreen = () => {
-  const { login, register, status } = useAuth();
+  const { login, register, status, continueAsGuest } = useAuth();
   const [form, setForm] = useState(initialForm);
   const [mode, setMode] = useState<AuthMode>("login");
   const [loading, setLoading] = useState(false);
@@ -151,6 +151,17 @@ export const LoginScreen = () => {
               {loading ? "Working..." : mode === "login" ? "Login" : "Register"}
             </button>
           </form>
+          <div className="space-y-2 text-center">
+            <span className="text-xs uppercase tracking-[0.4em] text-on-surface-variant">or</span>
+            <button
+              type="button"
+              onClick={continueAsGuest}
+              disabled={loading || status === "loading"}
+              className="w-full py-2 rounded-lg border border-[#494454] text-xs font-semibold uppercase tracking-[0.4em] hover:bg-surface-container-high transition-all disabled:opacity-60"
+            >
+              Continue as Guest
+            </button>
+          </div>
         </section>
       </div>
     </div>

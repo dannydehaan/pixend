@@ -19,7 +19,7 @@ const formatRelativeUpdated = (timestamp?: string) => {
 };
 
 export const CollectionsScreen = () => {
-  const { status } = useAuth();
+  const { status, isGuest } = useAuth();
   const { workspaces, loading, error, refresh } = useWorkspaces();
   const [isCreatingCollection, setIsCreatingCollection] = useState(false);
   const [activeCollection, setActiveCollection] = useState<Collection | null>(null);
@@ -35,11 +35,14 @@ export const CollectionsScreen = () => {
 
   const connectionState = useMemo(() => {
     if (status === "loading") return "Connecting...";
+    if (isGuest) {
+      return `Guest session · ${collections.length} collections · ${totalEnvironments} environments`;
+    }
     if (status === "authenticated") {
       return `Connected · ${collections.length} collections · ${totalEnvironments} environments`;
     }
     return "Not authenticated";
-  }, [collections.length, status, totalEnvironments]);
+  }, [collections.length, status, isGuest, totalEnvironments]);
 
   return (
     <div className="flex h-screen overflow-hidden bg-surface text-on-surface">
@@ -69,7 +72,7 @@ export const CollectionsScreen = () => {
               key={link.label}
               className={`flex items-center gap-3 px-3 py-3 rounded transition-all cursor-pointer ${
                 link.active
-                  ? "bg-[#222a3d] text-[#d0bcff] border-r-2 border-[#d0bcff]"
+                  ? "bg-[#222a3d] text-[#e84c1b] border-r-2 border-[#e84c1b]"
                   : "text-[#dae2fd]/50 hover:text-[#dae2fd] hover:bg-[#222a3d]/50"
               }`}
             >
@@ -92,9 +95,9 @@ export const CollectionsScreen = () => {
       <main className="flex-1 flex flex-col h-full bg-surface overflow-y-auto">
         <header className="sticky top-0 z-50 flex justify-between items-center w-full px-6 h-16 backdrop-blur-xl bg-[#0b1326]/90 border-none">
           <div className="flex items-center gap-8">
-            <span className="text-xl font-black tracking-tighter uppercase text-[#d0bcff]">Pixend</span>
+            <span className="text-xl font-black tracking-tighter uppercase text-[#e84c1b]">Pixend</span>
             <nav className="hidden lg:flex items-center gap-6">
-              <a className="font-['Inter'] tracking-tight text-sm font-bold text-[#d0bcff] border-b-2 border-[#d0bcff] pb-1" href="#">
+              <a className="font-['Inter'] tracking-tight text-sm font-bold text-[#e84c1b] border-b-2 border-[#e84c1b] pb-1" href="#">
                 Workspace
               </a>
               <a className="font-['Inter'] tracking-tight text-sm font-medium text-[#dae2fd]/60 hover:text-[#dae2fd]" href="#">

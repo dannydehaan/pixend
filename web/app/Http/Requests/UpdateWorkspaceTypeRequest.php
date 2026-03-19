@@ -6,29 +6,29 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use App\Models\WorkspaceType;
 
-class StoreWorkspaceRequest extends FormRequest
+class UpdateWorkspaceTypeRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user() !== null;
+        $user = $this->user();
+        $workspace = $this->route('workspace');
+
+        return $user !== null
+            && $workspace !== null
+            && $workspace->owner_id === $user->id;
     }
 
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
-            'slug' => ['required', 'string', 'max:255', 'unique:workspaces,slug'],
             'type' => [
-                'nullable',
+                'required',
                 'string',
                 Rule::in([
-                    WorkspaceType::LOCAL,
                     WorkspaceType::COMPANY,
                     WorkspaceType::PREMIUM,
                 ]),
             ],
-            'description' => ['nullable', 'string', 'max:1000'],
-            'workspace_type' => ['nullable', 'string', 'exists:workspace_types,slug'],
             'organization_id' => [
                 'nullable',
                 'integer',

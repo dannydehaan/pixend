@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Services\WorkspaceAccessService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -9,7 +10,23 @@ class StoreCollectionRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user() !== null;
+        if (! $this->user()) {
+            return false;
+        }
+
+        $workspaceId = (int) $this->input('workspace_id');
+
+        if (! $workspaceId) {
+            return false;
+        }
+
+        try {
+            app(WorkspaceAccessService::class)->resolveWorkspaceForUser($workspaceId, $this->user());
+        } catch (\Throwable) {
+            return false;
+        }
+
+        return true;
     }
 
     public function rules(): array
@@ -19,7 +36,7 @@ class StoreCollectionRequest extends FormRequest
             'workspace_id' => [
                 'required',
                 'integer',
-                Rule::exists('user_workspace', 'workspace_id')->where('user_id', $this->user()->id),
+                Rule::exists('workspaces', 'id'),
             ],
             'description' => ['nullable', 'string'],
         ];

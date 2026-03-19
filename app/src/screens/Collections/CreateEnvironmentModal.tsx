@@ -1,5 +1,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { apiClient, Collection } from "../../services/api";
+import { useAuth } from "../../contexts/AuthContext";
+import { addGuestEnvironment } from "../../services/guestStorage";
 
 type Props = {
   open: boolean;
@@ -12,6 +14,7 @@ export const CreateEnvironmentModal = ({ open, collection, onClose, onSuccess }:
   const [name, setName] = useState("");
   const [region, setRegion] = useState("");
   const [description, setDescription] = useState("");
+  const { isGuest } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [globalError, setGlobalError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -39,12 +42,21 @@ export const CreateEnvironmentModal = ({ open, collection, onClose, onSuccess }:
     setSubmitting(true);
 
     try {
-      await apiClient.createEnvironment({
-        collection_id: collection.id,
-        name: name.trim(),
-        region: region || undefined,
-        description: description.trim() || undefined,
-      });
+      if (isGuest) {
+        await addGuestEnvironment({
+          collectionId: collection.id,
+          name: name.trim(),
+          region: region || undefined,
+          description: description.trim() || undefined,
+        });
+      } else {
+        await apiClient.createEnvironment({
+          collection_id: collection.id,
+          name: name.trim(),
+          region: region || undefined,
+          description: description.trim() || undefined,
+        });
+      }
       onSuccess();
     } catch (error) {
       const typed = error as Error & { details?: Record<string, string[]> };

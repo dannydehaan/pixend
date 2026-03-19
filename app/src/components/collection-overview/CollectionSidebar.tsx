@@ -24,7 +24,7 @@ const CollectionSidebar = () => (
           key={item.label}
           className={`flex items-center gap-3 px-3 py-3 rounded transition-transform cursor-pointer ${
             item.active
-              ? "bg-[#222a3d] text-[#d0bcff] border-r-2 border-[#d0bcff]"
+              ? "bg-[#222a3d] text-[#e84c1b] border-r-2 border-[#e84c1b]"
               : "text-[#dae2fd]/50 hover:text-[#dae2fd] hover:bg-[#222a3d]/50"
           }`}
         >

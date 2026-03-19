@@ -29,6 +29,7 @@ Route::prefix('1.0')->group(function () {
         Route::get('workspaces', [WorkspaceController::class, 'index']);
         Route::post('workspaces', [WorkspaceController::class, 'store']);
         Route::post('workspaces/{workspace}/users', [WorkspaceController::class, 'attachUser']);
+        Route::patch('workspaces/{workspace}/type', [WorkspaceController::class, 'upgrade']);
         Route::post('auth/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
     });
 });
