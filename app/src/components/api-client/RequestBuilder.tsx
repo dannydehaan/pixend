@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import BodyEditor from "./BodyEditor";
+import CodeGeneratorPanel from "./CodeGeneratorPanel";
 import HeaderList from "./HeaderList";
 import QueryParamsEditor from "./QueryParamsEditor";
 import ResponseViewer from "./ResponseViewer";
@@ -122,6 +123,7 @@ const RequestBuilder = () => {
   const [jsonError, setJsonError] = useState<string | null>(null);
   const [sendError, setSendError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("headers");
+  const [isCodePanelOpen, setIsCodePanelOpen] = useState(false);
   const controllerRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef(0);
 
@@ -129,6 +131,39 @@ const RequestBuilder = () => {
     () => ["POST", "PUT", "PATCH"].includes(requestState.method),
     [requestState.method],
   );
+
+  const sanitizedJsonBody = useMemo(
+    () => (requestState.bodyType === "json" ? sanitizeJsonInput(requestState.body) : requestState.body),
+    [requestState.body, requestState.bodyType],
+  );
+
+  const headersObject = useMemo(() =>
+    requestState.headers.reduce<Record<string, string>>((acc, header) => {
+      const key = header.key.trim();
+      if (key) {
+        acc[key] = header.value;
+      }
+      return acc;
+    }, {}),
+    [requestState.headers],
+  );
+
+  const finalUrl = useMemo(
+    () => composeUrlWithParams(requestState.url, requestState.queryParams),
+    [requestState.url, requestState.queryParams],
+  );
+
+  const codeRequestPayload = useMemo(() => {
+    const sanitizedBodyForCode =
+      requestState.method === "GET" ? undefined : requestState.bodyType === "json" ? sanitizedJsonBody : undefined;
+    return {
+      method: requestState.method,
+      url: finalUrl,
+      headers: headersObject,
+      queryParams: requestState.queryParams,
+      body: sanitizedBodyForCode,
+    };
+  }, [requestState.method, requestState.bodyType, requestState.queryParams, finalUrl, headersObject, sanitizedJsonBody]);
 
   const handleMethodChange = (newMethod: HttpMethod) => {
     setRequestState((prev) => {
@@ -182,7 +217,7 @@ const RequestBuilder = () => {
 
     let sanitizedBody = requestState.body;
     if (requestState.bodyType === "json") {
-      sanitizedBody = sanitizeJsonInput(requestState.body);
+      sanitizedBody = sanitizedJsonBody;
       try {
         if (sanitizedBody.trim()) {
           JSON.parse(sanitizedBody);
@@ -195,16 +230,6 @@ const RequestBuilder = () => {
     } else {
       setJsonError(null);
     }
-
-    const headersObject = requestState.headers.reduce<Record<string, string>>((acc, header) => {
-      const key = header.key.trim();
-      if (key) {
-        acc[key] = header.value;
-      }
-      return acc;
-    }, {});
-
-    const finalUrl = composeUrlWithParams(requestState.url, requestState.queryParams);
 
     setValidationError(null);
     setSendError(null);
@@ -360,6 +385,16 @@ const RequestBuilder = () => {
             </span>
             <span>{isSending ? "Sending" : "Send"}</span>
           </button>
+          <button
+            type="button"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-outline-variant/40 bg-[#0f1326] px-4 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-on-surface-variant hover:border-outline-variant"
+            onClick={() => setIsCodePanelOpen(true)}
+          >
+            <span className="material-symbols-outlined text-sm" aria-hidden>
+              code
+            </span>
+            <span>Code</span>
+          </button>
           {isSending && (
             <button
               type="button"
@@ -419,6 +454,7 @@ const RequestBuilder = () => {
       </div>
 
       <ResponseViewer response={requestState.response} isLoading={isSending} errorMessage={sendError} />
+      <CodeGeneratorPanel isOpen={isCodePanelOpen} onClose={() => setIsCodePanelOpen(false)} request={codeRequestPayload} />
     </div>
   );
 };
