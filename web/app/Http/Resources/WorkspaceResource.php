@@ -20,19 +20,26 @@ class WorkspaceResource extends JsonResource
                 'name' => $user->name,
                 'email' => $user->email,
             ])),
-            'type' => $this->whenLoaded('type', fn () => [
-                'id' => $this->type->id,
-                'slug' => $this->type->slug,
-                'name' => $this->type->name,
-                'description' => $this->type->description,
-                'sync_enabled' => $this->type->sync_enabled,
-                'requires_organization' => $this->type->requires_organization,
+            'type' => $this->type,
+            'workspace_type' => $this->whenLoaded('workspaceType', fn () => [
+                'id' => $this->workspaceType->id,
+                'slug' => $this->workspaceType->slug,
+                'name' => $this->workspaceType->name,
+                'description' => $this->workspaceType->description,
+                'sync_enabled' => $this->workspaceType->sync_enabled,
+                'requires_organization' => $this->workspaceType->requires_organization,
             ]),
             'organization' => $this->whenLoaded('organization', fn () => [
                 'id' => $this->organization->id,
                 'name' => $this->organization->name,
                 'slug' => $this->organization->slug,
             ]),
+            'owner' => $this->whenLoaded('owner', fn () => [
+                'id' => $this->owner->id,
+                'name' => $this->owner->name,
+                'email' => $this->owner->email,
+            ]),
+            'sync_enabled' => $this->sync_enabled,
             'collections' => $this->whenLoaded('collections', fn () => $this->collections->map(fn ($collection) => [
                 'id' => $collection->id,
                 'name' => $collection->name,

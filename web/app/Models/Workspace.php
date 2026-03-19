@@ -4,8 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\WorkspaceType;
 use App\Models\Organization;
+use App\Models\User;
+use App\Models\WorkspaceType;
 
 class Workspace extends Model
 {
@@ -15,8 +16,15 @@ class Workspace extends Model
         'name',
         'slug',
         'description',
+        'type',
         'workspace_type_id',
+        'owner_id',
         'organization_id',
+        'sync_enabled',
+    ];
+
+    protected $casts = [
+        'sync_enabled' => 'boolean',
     ];
 
     public function users(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
@@ -29,7 +37,7 @@ class Workspace extends Model
         return $this->hasMany(Collection::class);
     }
 
-    public function type(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function workspaceType(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(WorkspaceType::class);
     }
@@ -37,5 +45,10 @@ class Workspace extends Model
     public function organization(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Organization::class);
+    }
+
+    public function owner(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'owner_id');
     }
 }

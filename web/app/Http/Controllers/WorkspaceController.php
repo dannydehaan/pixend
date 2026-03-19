@@ -16,7 +16,7 @@ class WorkspaceController extends Controller
 {
     public function index(Request $request): AnonymousResourceCollection
     {
-        $workspaces = $request->user()->workspaces()->with(['users', 'type', 'organization', 'collections.environments'])->get();
+        $workspaces = $request->user()->workspaces()->with(['users', 'workspaceType', 'organization', 'owner', 'collections.environments'])->get();
 
         return WorkspaceResource::collection($workspaces);
     }
@@ -26,6 +26,7 @@ class WorkspaceController extends Controller
         $payload = $request->validated();
         $typeSlug = $request->input('workspace_type') ?? WorkspaceType::LOCAL;
         $type = WorkspaceType::where('slug', $typeSlug)->first() ?? WorkspaceType::getDefaultType();
+        $syncEnabled = in_array($type->slug, [WorkspaceType::COMPANY, WorkspaceType::PREMIUM_PERSONAL], true);
 
         if ($type->requires_organization) {
             $organizationId = $request->validated()['organization_id'] ?? null;
@@ -46,7 +47,10 @@ class WorkspaceController extends Controller
             'name' => $payload['name'],
             'slug' => $payload['slug'],
             'description' => $payload['description'] ?? null,
+            'type' => $type->slug,
             'workspace_type_id' => $type->id,
+            'owner_id' => $request->user()->id,
+            'sync_enabled' => $syncEnabled,
         ];
 
         if ($organization) {
@@ -56,13 +60,13 @@ class WorkspaceController extends Controller
         $workspace = Workspace::create($workspaceData);
         $workspace->users()->attach($request->user());
 
-        return new WorkspaceResource($workspace->load(['users', 'type', 'organization']));
+        return new WorkspaceResource($workspace->load(['users', 'workspaceType', 'organization', 'owner']));
     }
 
     public function attachUser(AttachWorkspaceUserRequest $request, Workspace $workspace): WorkspaceResource
     {
         $workspace->users()->syncWithoutDetaching($request->user_id);
 
-        return new WorkspaceResource($workspace->refresh()->load(['users', 'type', 'organization']));
+        return new WorkspaceResource($workspace->refresh()->load(['users', 'workspaceType', 'organization', 'owner']));
     }
 }
