@@ -75,13 +75,24 @@ export async function sendRequest({
       if (signal?.aborted) {
         return { duration: Math.round(performance.now() - start) };
       }
-      let message = "Request failed.";
-      if (!isTauri) {
-        message =
-          "Request failed. This may be caused by CORS restrictions in browser mode. Try running the app with Tauri (`npm run tauri dev`).";
-      }
       if (error instanceof Error && error.name === "AbortError") {
         return { duration: Math.round(performance.now() - start) };
+      }
+      const reason = error instanceof Error ? error.message : String(error);
+      const message = isTauri
+        ? `Request to ${method} ${url} failed: ${reason}`
+        : `Request to ${method} ${url} failed: ${reason}. The browser may be blocked by CORS or the dev proxy isn't running.`;
+      if (import.meta.env.DEV) {
+        console.error(
+          `[httpClient] request failed (Tauri=${isTauri})`,
+          {
+            url,
+            method,
+            headers,
+            body,
+            error: reason,
+          },
+        );
       }
       return {
         duration: Math.round(performance.now() - start),
@@ -116,13 +127,22 @@ export async function sendRequest({
     if (signal?.aborted) {
       return { duration: Math.round(performance.now() - start) };
     }
-    let message = "Request failed.";
-    if (!isTauri) {
-      message =
-        "Request failed. This may be caused by CORS restrictions in browser mode. Try running the app with Tauri (`npm run tauri dev`).";
-    }
     if (error instanceof Error && error.name === "AbortError") {
       return { duration: Math.round(performance.now() - start) };
+    }
+    const reason = error instanceof Error ? error.message : String(error);
+    const message = `Request to ${method} ${url} failed: ${reason}. Check that ${url} is reachable and that the browser dev proxy can forward the call.`;
+    if (import.meta.env.DEV) {
+      console.error(
+        `[httpClient] fetch failed`,
+        {
+          url,
+          method,
+          headers,
+          body,
+          error: reason,
+        },
+      );
     }
     return {
       duration: Math.round(performance.now() - start),

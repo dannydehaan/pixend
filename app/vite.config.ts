@@ -19,6 +19,14 @@ export default defineConfig(() => ({
           port: 1421,
         }
       : undefined,
+    // proxy: {
+    //   "/api": {
+    //     target: "https://pixend.test",
+    //     changeOrigin: true,
+    //     secure: false,
+    //     rewrite: (path) => path.replace(/^\/api/, "/api"),
+    //   },
+    // },
     watch: {
       ignored: ["**/src-tauri/**"],
     },
