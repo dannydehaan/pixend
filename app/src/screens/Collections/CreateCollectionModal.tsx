@@ -12,7 +12,7 @@ type Props = {
 
 export const CreateCollectionModal = ({ open, onClose, onSuccess }: Props) => {
   const { workspaces, addCollectionToWorkspace } = useWorkspaces();
-  const { isGuest } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [workspaceId, setWorkspaceId] = useState<number | null>(null);
@@ -55,13 +55,13 @@ export const CreateCollectionModal = ({ open, onClose, onSuccess }: Props) => {
     console.log("Submit Create Collection payload", payload);
 
     try {
-      const collection = isGuest
-        ? await addGuestCollection({
+      const collection = isAuthenticated
+        ? await apiClient.createCollection(payload)
+        : await addGuestCollection({
             workspaceId,
             name: payload.name,
             description: payload.description,
-          })
-        : await apiClient.createCollection(payload);
+          });
 
       addCollectionToWorkspace(workspaceId, collection);
       onSuccess();

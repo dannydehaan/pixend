@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { EnvironmentPayload, deleteEnvironment, loadEnvironments, saveEnvironment } from "../../services/environmentService";
 import {
@@ -18,6 +18,7 @@ const EnvironmentsScreen = () => {
   const [loading, setLoading] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const pendingEnvironmentsRef = useRef<EnvironmentPayload[]>([]);
 
   useEffect(() => {
     if (!encryptionKey) return;
@@ -76,6 +77,8 @@ const EnvironmentsScreen = () => {
     setActiveId(newEnv.id);
     if (encryptionKey) {
       await persistEnvironment(newEnv);
+    } else {
+      pendingEnvironmentsRef.current = [...pendingEnvironmentsRef.current, newEnv];
     }
   };
 
@@ -144,8 +147,21 @@ const EnvironmentsScreen = () => {
 
   const rows = useMemo(() => {
     if (!activeEnvironment) return [];
-    return Object.entries(activeEnvironment.variables ?? {});
+    return Object.entries(activeEnvironment.variables ?? {}).map(([key, value], index) => ({
+      id: `${activeEnvironment.id}-${index}`,
+      key,
+      value,
+    }));
   }, [activeEnvironment]);
+
+  useEffect(() => {
+    if (!encryptionKey || !pendingEnvironmentsRef.current.length) return;
+    const pending = [...pendingEnvironmentsRef.current];
+    pendingEnvironmentsRef.current = [];
+    pending.forEach((env) => {
+      persistEnvironment(env);
+    });
+  }, [encryptionKey]);
 
   return (
     <div className="flex h-full gap-6 p-6">
@@ -226,18 +242,18 @@ const EnvironmentsScreen = () => {
               </div>
               <div className="flex-1 overflow-auto">
                 <div className="space-y-2">
-                  {rows.map(([key, value]) => (
-                    <div key={key} className="flex items-center gap-2">
+                  {rows.map((row) => (
+                    <div key={row.id} className="flex items-center gap-2">
                       <input
                         className="flex-1 rounded-lg border border-outline-variant/40 bg-[var(--surface)] px-3 py-2 text-sm"
-                        value={key}
+                        value={row.key}
                         onChange={(event) => {
                           const newKey = event.target.value;
                           updateEnvironment(activeEnvironment.id, (env) => {
                             const variables = { ...(env.variables ?? {}) };
-                            delete variables[key];
+                            delete variables[row.key];
                             if (newKey.trim()) {
-                              variables[newKey] = value;
+                              variables[newKey] = row.value;
                             }
                             return { ...env, variables };
                           });
@@ -245,15 +261,15 @@ const EnvironmentsScreen = () => {
                       />
                       <input
                         className="flex-1 rounded-lg border border-outline-variant/40 bg-[var(--surface)] px-3 py-2 text-sm"
-                        value={value}
+                        value={row.value}
                         onChange={(event) => {
                           const next = event.target.value;
-                          handleVariableChange(key, next);
+                          handleVariableChange(row.key, next);
                         }}
                       />
                       <button
                         type="button"
-                        onClick={() => handleDeleteVariable(key)}
+                        onClick={() => handleDeleteVariable(row.key)}
                         className="text-xs font-semibold uppercase tracking-[0.3em] text-error"
                       >
                         Remove
