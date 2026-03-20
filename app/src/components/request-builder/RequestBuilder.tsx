@@ -1,9 +1,60 @@
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import MethodSelector from "./MethodSelector";
 import RequestTabs, { type TabOption } from "./RequestTabs";
 import UrlInput from "./UrlInput";
+import { collectMissingVariables, resolveVariablesRecursive } from "../../utils/resolveVariables";
+import { resolveFaker } from "../../utils/fakerResolver";
+import { loadEnvironments, saveEnvironment } from "../../services/environmentService";
+import { useAuth } from "../../contexts/AuthContext";
 
 const defaultMethods = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
+const FAKER_VARIABLES = [
+  "$guid",
+  "$randomUUID",
+  "$timestamp",
+  "$isoTimestamp",
+  "$randomEmail",
+  "$randomUserName",
+  "$randomPassword",
+  "$randomIP",
+  "$randomIPV6",
+  "$randomMACAddress",
+  "$randomUserAgent",
+  "$randomProtocol",
+  "$randomFirstName",
+  "$randomLastName",
+  "$randomFullName",
+  "$randomPhoneNumber",
+  "$randomCity",
+  "$randomStreetAddress",
+  "$randomCountry",
+  "$randomLatitude",
+  "$randomLongitude",
+  "$randomCompanyName",
+  "$randomJobTitle",
+  "$randomWord",
+  "$randomSentence",
+  "$randomParagraph",
+  "$randomBoolean",
+  "$randomInt",
+  "$randomFloat",
+  "$randomHexColor",
+  "$randomColor",
+  "$randomPrice",
+  "$randomProductName",
+  "$randomDepartment",
+];
+
+type VariableEntry = {
+  id: string;
+  key: string;
+  value: string;
+};
+
+const generateVariableId = () =>
+  typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 const RequestBuilder = () => {
   const [selectedMethod, setSelectedMethod] = useState<string>("GET");
@@ -13,6 +64,138 @@ const RequestBuilder = () => {
   const [responseStatus, setResponseStatus] = useState<number | null>(null);
   const [responseHeaders, setResponseHeaders] = useState<Record<string, string>>({});
   const [responseText, setResponseText] = useState<string>("");
+  const [environmentEntries, setEnvironmentEntries] = useState<VariableEntry[]>([
+    { id: "base-url", key: "baseUrl", value: "https://api.pixend.io/v1" },
+    { id: "token", key: "token", value: "abc123" },
+  ]);
+  const [missingVariables, setMissingVariables] = useState<string[]>([]);
+  const [environmentId, setEnvironmentId] = useState<string>("default-env");
+  const [environmentName, setEnvironmentName] = useState<string>("Local Environment");
+  const [environmentHydrated, setEnvironmentHydrated] = useState(false);
+  const { encryptionKey, isAuthenticated } = useAuth();
+  const urlInputRef = useRef<HTMLInputElement | null>(null);
+
+  const environmentVariables = useMemo(() => {
+    return environmentEntries.reduce<Record<string, string>>((acc, entry) => {
+      const key = entry.key.trim();
+      if (!key) {
+        return acc;
+      }
+      acc[key] = entry.value;
+      return acc;
+    }, {});
+  }, [environmentEntries]);
+
+  const resolveWithEnvironment = (value: string) =>
+    resolveVariablesRecursive(resolveFaker(value), environmentVariables);
+
+  const hydrateEntriesFromRecord = (variables: Record<string, string>) => {
+    const entries = Object.entries(variables).map(([key, value]) => ({
+      id: generateVariableId(),
+      key,
+      value,
+    }));
+    if (entries.length) {
+      setEnvironmentEntries(entries);
+    }
+  };
+
+  useEffect(() => {
+    if (!encryptionKey) {
+      return;
+    }
+
+    let isMounted = true;
+    setEnvironmentHydrated(false);
+
+    loadEnvironments(encryptionKey, isAuthenticated)
+      .then((records) => {
+        if (!isMounted) return;
+        if (records.length > 0) {
+          const record = records[0];
+          setEnvironmentId(record.id);
+          setEnvironmentName(record.name);
+          hydrateEntriesFromRecord(record.variables);
+        }
+      })
+      .catch(() => {
+        // ignore
+      })
+      .finally(() => {
+        if (isMounted) {
+          setEnvironmentHydrated(true);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [encryptionKey, isAuthenticated]);
+
+  useEffect(() => {
+    if (!encryptionKey || !environmentHydrated) {
+      return;
+    }
+
+    const handler = setTimeout(() => {
+      const variables = environmentEntries.reduce<Record<string, string>>((acc, entry) => {
+        const key = entry.key.trim();
+        if (key) {
+          acc[key] = entry.value;
+        }
+        return acc;
+      }, {});
+
+      saveEnvironment(
+        { id: environmentId, name: environmentName, variables },
+        encryptionKey,
+        isAuthenticated,
+      ).catch(() => {
+        // swallow errors for now
+      });
+    }, 400);
+
+    return () => clearTimeout(handler);
+  }, [encryptionKey, environmentEntries, environmentHydrated, environmentId, environmentName, isAuthenticated]);
+
+  const handleAddVariable = () => {
+    setEnvironmentEntries((prev) => [
+      ...prev,
+      { id: generateVariableId(), key: "", value: "" },
+    ]);
+  };
+
+  const updateVariable = (id: string, field: "key" | "value", value: string) => {
+    setEnvironmentEntries((prev) =>
+      prev.map((entry) => (entry.id === id ? { ...entry, [field]: value } : entry)),
+    );
+  };
+
+  const removeVariable = (id: string) => {
+    setEnvironmentEntries((prev) => prev.filter((entry) => entry.id !== id));
+  };
+
+  const resolveWithEnvironment = (value: string) =>
+    resolveVariablesRecursive(resolveFaker(value), environmentVariables);
+
+  const insertAtCursor = (value: string) => {
+    setEndpoint((prev) => {
+      const input = urlInputRef.current;
+      if (!input) {
+        return prev + value;
+      }
+      const start = input.selectionStart ?? prev.length;
+      const end = input.selectionEnd ?? prev.length;
+      const before = prev.slice(0, start);
+      const after = prev.slice(end);
+      setTimeout(() => {
+        const cursor = start + value.length;
+        input.setSelectionRange(cursor, cursor);
+        input.focus();
+      }, 0);
+      return `${before}${value}${after}`;
+    });
+  };
 
   const handleSend = async () => {
     try {
@@ -36,7 +219,30 @@ const RequestBuilder = () => {
         init.body = requestBody;
       }
 
-      const response = await fetch(endpoint, init);
+      const resolvedUrl = resolveWithEnvironment(endpoint);
+      const resolvedHeaders = Object.fromEntries(
+        Object.entries(headers).map(([key, value]) => [key, resolveWithEnvironment(value)]),
+      );
+      const resolvedBody = shouldAttachBody ? resolveWithEnvironment(requestBody) : undefined;
+
+      const missingTracker = new Set<string>();
+      const trackMissing = (value?: string) => {
+        if (!value) return;
+        const fakerResolved = resolveFaker(value);
+        collectMissingVariables(fakerResolved, environmentVariables).forEach((key) => missingTracker.add(key));
+      };
+      trackMissing(endpoint);
+      Object.values(headers).forEach(trackMissing);
+      if (shouldAttachBody) {
+        trackMissing(requestBody);
+      }
+      setMissingVariables(Array.from(missingTracker));
+
+      const response = await fetch(resolvedUrl, {
+        ...init,
+        headers: resolvedHeaders,
+        body: shouldAttachBody ? resolvedBody : undefined,
+      });
       setResponseStatus(response.status);
 
       const headersObj: Record<string, string> = {};
@@ -208,7 +414,13 @@ const RequestBuilder = () => {
           <div className="p-6">
             <div className="flex gap-2 items-stretch">
               <MethodSelector methods={defaultMethods} value={selectedMethod} onChange={setSelectedMethod} />
-              <UrlInput value={endpoint} onChange={setEndpoint} />
+              <UrlInput
+                value={endpoint}
+                onChange={setEndpoint}
+                datalistId="faker-variables"
+                datalistOptions={FAKER_VARIABLES}
+                inputRef={urlInputRef}
+              />
               <button
                 onClick={handleSend}
                 className="px-8 bg-gradient-to-br from-primary to-primary-container text-on-primary-container font-black rounded-lg hover:shadow-[0_0_20px_rgba(208,188,255,0.3)] transition-all active:scale-95"
@@ -261,8 +473,92 @@ const RequestBuilder = () => {
                 <div className="bg-surface-container-high p-4 rounded-xl">
                   <p className="text-[10px] font-medium text-on-surface-variant/60 uppercase mb-2">Environment</p>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-on-surface">Production (AWS-E1)</span>
+                    <span className="text-xs font-bold text-on-surface">{environmentName}</span>
                     <span className="material-symbols-outlined text-sm text-primary">cloud_done</span>
+                  </div>
+                </div>
+                <div className="bg-surface-container-high p-4 rounded-xl space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] font-medium text-on-surface-variant/60 uppercase">Environment Variables</p>
+                    <button
+                      type="button"
+                      onClick={handleAddVariable}
+                      className="text-[10px] font-semibold text-secondary hover:text-secondary/80 transition-colors"
+                    >
+                      Add
+                    </button>
+                  </div>
+                  <div className="space-y-2 max-h-36 overflow-auto">
+                    {environmentEntries.map((entry) => {
+                      const trimmedKey = entry.key.trim();
+                      const isMissing = trimmedKey && missingVariables.includes(trimmedKey);
+                      const inputClass = `flex-1 rounded-lg border px-2 py-1 text-xs transition-colors ${
+                        isMissing
+                          ? "border-error/80 bg-error/5 text-error"
+                          : "border-outline-variant/40 bg-surface-container-low text-on-surface"
+                      }`;
+
+                      return (
+                        <div key={entry.id} className="flex gap-2">
+                          <input
+                            value={entry.key}
+                            placeholder="key"
+                            className={inputClass}
+                            onChange={(event) => updateVariable(entry.id, "key", event.target.value)}
+                          />
+                          <input
+                            value={entry.value}
+                            placeholder="value"
+                            className={inputClass}
+                            onChange={(event) => updateVariable(entry.id, "value", event.target.value)}
+                          />
+                          <button
+                            type="button"
+                            className="text-sm text-on-surface-variant hover:text-error transition-colors"
+                            onClick={() => removeVariable(entry.id)}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="text-[10px] text-on-surface-variant/70 space-y-1">
+                    {environmentEntries
+                      .filter((entry) => entry.key.trim())
+                      .map((entry) => (
+                        <p key={`${entry.id}-preview`} className="flex items-center gap-1 font-mono">
+                          <span className="text-primary">{`{{${entry.key.trim()}}}`}</span>
+                          <span>→</span>
+                          <span className="truncate">{entry.value || "–"}</span>
+                        </p>
+                      ))}
+                  </div>
+                  {missingVariables.length > 0 && (
+                    <p className="text-[10px] text-error mt-1">
+                      Missing variable{missingVariables.length === 1 ? "" : "s"}: {missingVariables.join(", ")}
+                    </p>
+                  )}
+                </div>
+                <div className="bg-surface-container-high p-4 rounded-xl">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[10px] font-medium text-on-surface-variant/60 uppercase">Faker autocomplete</p>
+                    <span className="text-[10px] text-secondary">Click to insert</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {FAKER_VARIABLES.slice(0, 12).map((variable) => (
+                      <button
+                        key={variable}
+                        type="button"
+                        onClick={() => insertAtCursor(variable)}
+                        className="px-2 py-1 rounded bg-surface-container-low border border-outline-variant/30 text-[10px] font-semibold uppercase tracking-wider hover:border-primary focus:border-primary focus:outline-none"
+                      >
+                        {variable}
+                      </button>
+                    ))}
+                    <span className="text-[10px] text-on-surface-variant/70">
+                      +{FAKER_VARIABLES.length - 12} more
+                    </span>
                   </div>
                 </div>
                 <div className="bg-surface-container-high p-4 rounded-xl">

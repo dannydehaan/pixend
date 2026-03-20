@@ -1,8 +1,11 @@
-import type { ChangeEvent } from "react";
+import type { ChangeEvent, RefObject } from "react";
 
 type UrlInputProps = {
   value: string;
   onChange: (value: string) => void;
+  datalistId?: string;
+  datalistOptions?: string[];
+  inputRef?: RefObject<HTMLInputElement>;
 };
 
 const UrlInput = ({ value, onChange }: UrlInputProps) => {
@@ -17,7 +20,16 @@ const UrlInput = ({ value, onChange }: UrlInputProps) => {
         type="text"
         value={value}
         onChange={handleChange}
+        list={datalistId}
+        ref={inputRef}
       />
+      {datalistId && datalistOptions?.length && (
+        <datalist id={datalistId}>
+          {datalistOptions.map((option) => (
+            <option key={option} value={option} />
+          ))}
+        </datalist>
+      )}
     </div>
   );
 };
