@@ -156,17 +156,24 @@ const request = async <T>(
 
   const controller = new AbortController();
   const signal = opts.signal ?? controller.signal;
-  const headers = await buildHeaders(includeAuth);
+  const baseHeaders = await buildHeaders(includeAuth);
+  const extraInitHeaders =
+    init.headers instanceof Headers
+      ? Object.fromEntries(init.headers.entries())
+      : (init.headers as Record<string, string> | undefined) ?? {};
+  const mergedHeaders: Record<string, string> = {
+    ...baseHeaders,
+    ...extraInitHeaders,
+  };
 
     const fetchPromise = (async () => {
-      const contentTypeHeader = ((init.headers as Record<string, string>)?.["Content-Type"] ?? "").toLowerCase();
+      const contentTypeHeader = (mergedHeaders["Content-Type"] ?? "").toLowerCase();
       const bodyType = contentTypeHeader.includes("application/json") && typeof init.body === "string" ? "json" : "none";
       const result = await sendRequest({
         url: fullPath,
         method: (init.method ?? "GET").toUpperCase(),
         headers: {
-          ...headers,
-          ...(init.headers ?? {}),
+          ...mergedHeaders,
         },
         bodyType,
         body: typeof init.body === "string" ? init.body : undefined,
@@ -191,6 +198,15 @@ const request = async <T>(
         }
       } else if (result.response.body) {
         body = result.response.body;
+      }
+      if (result.response.status < 200 || result.response.status >= 300) {
+        const detail =
+          typeof body === "string"
+            ? body
+            : body && typeof body === "object"
+            ? ("message" in body ? (body as Record<string, unknown>).message : JSON.stringify(body))
+            : "Unexpected response";
+        throw new Error(`Request to ${fullPath} failed (${result.response.status}): ${detail}`);
       }
       return {
         status: result.response.status,
