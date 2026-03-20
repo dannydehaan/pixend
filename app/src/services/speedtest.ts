@@ -1,4 +1,5 @@
 import { listen } from '@tauri-apps/api/event';
+import { ensurePixendClient, isPixendClient } from '../lib/tauriClient';
 
 type Listener = () => void;
 
@@ -14,24 +15,34 @@ type EventPayloads = {
 
 type EventName = keyof EventPayloads;
 
-const isTauri = () => typeof window !== 'undefined' && typeof window.__TAURI_IPC__ !== 'undefined';
-
-const invoke = async <T>(cmd: string, payload?: Record<string, unknown>): Promise<T> => {
-  if (!isTauri()) {
+const invokeSpeedtestCommand = async <T>(cmd: string, payload?: Record<string, unknown>): Promise<T> => {
+  const tauri = (window as Window & {
+    __TAURI__?: {
+      invoke: (args: { cmd: string; payload?: Record<string, unknown> }) => Promise<unknown>;
+    };
+  }).__TAURI__;
+  if (!tauri) {
     throw new Error('Speedtest is only available inside the Pixend client.');
   }
-  const response = await window.__TAURI_IPC__?.invoke({ cmd, payload });
+  const response = await tauri.invoke({ cmd, payload });
   return response as T;
 };
 
-export const runSpeedtest = async () => invoke<void>('run_speedtest_command');
-export const cancelSpeedtest = async () => invoke<boolean>('cancel_speedtest_command');
+export const runSpeedtest = async () => {
+  ensurePixendClient();
+  return invokeSpeedtestCommand<void>('run_speedtest_command');
+};
+
+export const cancelSpeedtest = async () => {
+  ensurePixendClient();
+  return invokeSpeedtestCommand<boolean>('cancel_speedtest_command');
+};
 
 export const subscribeSpeedtest = <K extends EventName>(
   event: K,
   handler: (payload: EventPayloads[K]) => void,
 ) => {
-  if (!isTauri()) {
+  if (!isPixendClient()) {
     return () => undefined;
   }
   const unlistenPromise = listen(event, (eventPayload) => {
