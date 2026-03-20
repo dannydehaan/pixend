@@ -83,6 +83,8 @@ impl LimiterState {
     }
 }
 
+/// Enforces the active `NetworkProfile` (download/upload rates in KB/s and latency in ms) for the Rust network bridge.
+/// Only requests that pass through `send_network_request` are throttled; the OS network stack itself is not affected.
 pub struct NetworkThrottler {
     state: SharedNetworkState,
     limiter_state: Mutex<LimiterState>,

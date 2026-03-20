@@ -77,24 +77,16 @@ export const WorkspaceLayout = () => {
         <nav className="flex-1 px-3 space-y-1">
           {primaryNavItems.map((link) => {
             const isActive = link.matches(location.pathname);
-            const isLocked = link.path === "/network" && !isPaidUser;
             return (
               <button
                 key={link.label}
                 type="button"
-                onClick={() => {
-                  if (isLocked) {
-                    openSettings();
-                    return;
-                  }
-                  navigate(link.path);
-                }}
+                onClick={() => navigate(link.path)}
                 className={`flex items-center gap-3 px-3 py-3 rounded transition-all text-xs font-semibold uppercase tracking-widest ${
                   isActive
                     ? "bg-[var(--border)] text-[var(--primary)] border-r-2 border-[var(--primary)]"
                     : "text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--border)]/40"
-                } ${isLocked ? "opacity-60 cursor-not-allowed" : ""}`}
-                aria-disabled={isLocked}
+                }`}
               >
                 <span className="material-symbols-outlined text-[20px]">{link.icon}</span>
                 <span>{link.label}</span>

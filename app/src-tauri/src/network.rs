@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
+/// Network preset metadata describing each supported throttle profile.
+/// Speeds are expressed in KB/s so the UI remains KB/s-native.
 #[derive(Debug, Serialize, Deserialize, Clone, Eq, PartialEq)]
 pub struct NetworkPreset {
     pub preset_id: &'static str,
@@ -109,6 +111,7 @@ const PRESETS: [NetworkPreset; 9] = [
     },
 ];
 
+/// The serialized profile currently stored in App state. Counters (download/upload/latency) mirror the UI and are stored in KB/s / ms.
 #[derive(Debug, Serialize, Deserialize, Clone, Eq, PartialEq)]
 pub struct NetworkProfile {
     pub preset_id: String,
@@ -152,6 +155,9 @@ impl NetworkProfile {
     }
 }
 
+/// Keeps the singleton active profile. Only the Rust `send_network_request` bridge consults this
+/// state, so throttling applies only to app traffic routed through that command.
+/// The OS and other network clients remain unaffected.
 pub struct NetworkState {
     profile: tokio::sync::Mutex<NetworkProfile>,
 }
@@ -186,3 +192,41 @@ impl NetworkState {
 }
 
 pub type SharedNetworkState = Arc<NetworkState>;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn preset_lookup_yields_expected_values() {
+        let all = NetworkPreset::all();
+        assert!(all
+            .iter()
+            .any(|preset| preset.preset_id == NetworkPreset::EDGE));
+        assert_eq!(
+            NetworkPreset::by_id(NetworkPreset::NO_LIMIT).unwrap().label,
+            "No limit"
+        );
+        assert_eq!(
+            NetworkPreset::by_id(NetworkPreset::CUSTOM).unwrap().label,
+            "Custom"
+        );
+    }
+
+    #[test]
+    fn network_profile_validation_requires_positive_limits_when_enabled() {
+        let mut profile = NetworkProfile::apply_preset(&NetworkPreset::all()[1]);
+        profile.enabled = true;
+        profile.download_kbps = 0;
+        assert!(matches!(
+            profile.validate(),
+            Err(NetworkProfileError::DownloadLimitRequired)
+        ));
+        profile.download_kbps = 10;
+        profile.upload_kbps = 0;
+        assert!(matches!(
+            profile.validate(),
+            Err(NetworkProfileError::UploadLimitRequired)
+        ));
+    }
+}

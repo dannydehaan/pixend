@@ -23,6 +23,10 @@ export type HttpClientResult = {
   error?: Error;
 };
 
+/**
+ * sendRequest uses the Rust `send_network_request_command` when running inside Tauri so the active profile throttles bytes in KB/s.
+ * The browser fallback still uses `fetch` and therefore bypasses the limiter (browser mode cannot reach the Rust bridge).
+ */
 export async function sendRequest({
   url,
   method,

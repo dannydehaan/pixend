@@ -3,6 +3,7 @@ use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, time::Instant};
 
+/// Request payload received from the frontend. Speeds remain in KB/s so the Rust bridge can enforce the correct limits.
 #[derive(Deserialize)]
 pub struct NetworkRequest {
     pub url: String,
@@ -19,6 +20,8 @@ pub struct NetworkResponse {
     pub duration_ms: u128,
 }
 
+/// Executes HTTP requests using the shared `NetworkThrottler` so the active profile is enforced.
+/// This is the only path through which app traffic is throttled; other scripts or OS-level clients are untouched.
 pub async fn send_network_request(
     request: NetworkRequest,
     throttler: &NetworkThrottler,
