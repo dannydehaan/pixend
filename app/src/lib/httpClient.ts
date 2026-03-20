@@ -1,5 +1,6 @@
 const isTauriContext = () =>
-  typeof window !== "undefined" && "__TAURI__" in window && Boolean((window as any).__TAURI__);
+  typeof window !== "undefined" &&
+  typeof (window as Window & { __TAURI_IPC__?: unknown }).__TAURI_IPC__ !== "undefined";
 
 type SendRequestParams = {
   url: string;
@@ -10,8 +11,14 @@ type SendRequestParams = {
   signal?: AbortSignal;
 };
 
+export type HttpClientResponse = {
+  status: number;
+  headers: Record<string, string>;
+  body: string;
+};
+
 export type HttpClientResult = {
-  response?: Response;
+  response?: HttpClientResponse;
   duration: number;
   error?: Error;
 };
@@ -36,30 +43,36 @@ export async function sendRequest({
   }
 
   const isTauri = isTauriContext();
-  console.log("Mode:", isTauri ? "TAURI" : "BROWSER");
-
-  try {
-    const fetchResult = isTauri
-      ? (await import("@tauri-apps/plugin-http")).fetch(url, {
-          method,
-          headers,
-          body: hasJsonBody ? { type: "Json", payload: parsedBody } : undefined,
-        })
-      : await globalThis.fetch(url, {
-          method,
-          headers,
-          body: hasJsonBody ? body : undefined,
-          signal,
-        });
-
-    return {
-      response: fetchResult,
-      duration: Math.round(performance.now() - start),
-    };
-  } catch (error) {
-    if (signal?.aborted) {
-      return { duration: Math.round(performance.now() - start) };
-    }
+  if (isTauri) {
+    try {
+      const ipc = (window as Window & { __TAURI_IPC__?: { invoke: (arg: { cmd: string; payload?: unknown }) => Promise<unknown> } }).__TAURI_IPC__;
+      if (!ipc) {
+        throw new Error("Tauri IPC not available");
+      }
+      const payload = {
+        url,
+        method,
+        headers,
+        body: hasJsonBody ? body : undefined,
+      };
+      const response = (await ipc.invoke({ cmd: "send_network_request_command", payload })) as {
+        status: number;
+        headers: Record<string, string>;
+        body: string;
+        duration_ms: number;
+      };
+      return {
+        response: {
+          status: response.status,
+          headers: response.headers,
+          body: response.body,
+        },
+        duration: response.duration_ms,
+      };
+    } catch (error) {
+      if (signal?.aborted) {
+        return { duration: Math.round(performance.now() - start) };
+      }
       let message = "Request failed.";
       if (!isTauri) {
         message =
@@ -72,5 +85,41 @@ export async function sendRequest({
         duration: Math.round(performance.now() - start),
         error: new Error(message),
       };
+    }
+  }
+
+  console.log("Mode:", "BROWSER");
+  try {
+    const fetchResult = await globalThis.fetch(url, {
+      method,
+      headers,
+      body: hasJsonBody ? body : undefined,
+      signal,
+    });
+
+    return {
+      response: {
+        status: fetchResult.status,
+        headers: Object.fromEntries(fetchResult.headers.entries()),
+        body: await fetchResult.text(),
+      },
+      duration: Math.round(performance.now() - start),
+    };
+  } catch (error) {
+    if (signal?.aborted) {
+      return { duration: Math.round(performance.now() - start) };
+    }
+    let message = "Request failed.";
+    if (!isTauri) {
+      message =
+        "Request failed. This may be caused by CORS restrictions in browser mode. Try running the app with Tauri (`npm run tauri dev`).";
+    }
+    if (error instanceof Error && error.name === "AbortError") {
+      return { duration: Math.round(performance.now() - start) };
+    }
+    return {
+      duration: Math.round(performance.now() - start),
+      error: new Error(message),
+    };
   }
 }

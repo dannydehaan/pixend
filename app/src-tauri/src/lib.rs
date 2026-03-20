@@ -1,9 +1,11 @@
 mod network;
+mod network_service;
 mod speedtest;
 #[allow(dead_code)]
 mod throttle;
 
 use network::{NetworkPreset, NetworkProfile, NetworkState, SharedNetworkState};
+use network_service::{send_network_request, NetworkRequest, NetworkResponse};
 use once_cell::sync::Lazy;
 use speedtest::{cancel_speedtest, run_speedtest};
 use std::{
@@ -12,6 +14,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 use tauri::AppHandle;
+use throttle::NetworkThrottler;
 
 static PROXY_PROCESS: Lazy<Mutex<Option<Child>>> = Lazy::new(|| Mutex::new(None));
 static APP_DIRECTORY: Lazy<PathBuf> = Lazy::new(|| {
@@ -21,9 +24,15 @@ static APP_DIRECTORY: Lazy<PathBuf> = Lazy::new(|| {
         .to_path_buf()
 });
 static NETWORK_STATE: Lazy<SharedNetworkState> = Lazy::new(|| Arc::new(NetworkState::new()));
+static NETWORK_THROTTLER: Lazy<NetworkThrottler> =
+    Lazy::new(|| NetworkThrottler::new(network_state().clone()));
 
 fn network_state() -> &'static SharedNetworkState {
     &NETWORK_STATE
+}
+
+fn network_throttler() -> &'static NetworkThrottler {
+    &NETWORK_THROTTLER
 }
 
 fn proxy_script_path() -> PathBuf {
@@ -56,6 +65,11 @@ async fn run_speedtest_command(app_handle: AppHandle) -> Result<(), String> {
 #[tauri::command]
 async fn cancel_speedtest_command() -> Result<bool, String> {
     cancel_speedtest().await
+}
+
+#[tauri::command]
+async fn send_network_request_command(request: NetworkRequest) -> Result<NetworkResponse, String> {
+    send_network_request(request, network_throttler()).await
 }
 
 #[tauri::command]
@@ -122,6 +136,7 @@ pub fn run() {
             list_network_presets,
             run_speedtest_command,
             cancel_speedtest_command,
+            send_network_request_command,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

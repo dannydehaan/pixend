@@ -325,12 +325,8 @@ const RequestBuilder = () => {
       }
 
       const response = result.response!;
-      const responseHeaders: Record<string, string> = {};
-      response.headers.forEach((value, key) => {
-        responseHeaders[key] = value;
-      });
-
-      const responseBody = await response.text();
+      const responseHeaders = response.headers;
+      const responseBody = response.body;
 
       addNetworkLog({
         ...baseLog,

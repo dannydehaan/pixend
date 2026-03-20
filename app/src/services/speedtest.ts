@@ -1,4 +1,4 @@
-import { listen, emit } from '@tauri-apps/api/event';
+import { listen } from '@tauri-apps/api/event';
 
 type Listener = () => void;
 

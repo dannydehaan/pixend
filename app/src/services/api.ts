@@ -1,6 +1,7 @@
 import { Store } from "@tauri-apps/plugin-store";
 import { isGuestMode } from "./guestSession";
 import { addGuestCollection } from "./guestStorage";
+import { sendRequest } from "../lib/httpClient";
 import type { ThemePalette } from "../lib/themePalettes";
 
 let apiBaseOverride: string | null = null;
@@ -157,52 +158,46 @@ const request = async <T>(
   const signal = opts.signal ?? controller.signal;
   const headers = await buildHeaders(includeAuth);
 
-  const fetchPromise = (async () => {
-    const response = await fetch(fullPath, {
-      ...init,
-      headers: {
-        ...headers,
-        ...(init.headers ?? {}),
-      },
-      signal,
-    });
+    const fetchPromise = (async () => {
+      const contentTypeHeader = ((init.headers as Record<string, string>)?.["Content-Type"] ?? "").toLowerCase();
+      const bodyType = contentTypeHeader.includes("application/json") && typeof init.body === "string" ? "json" : "none";
+      const result = await sendRequest({
+        url: fullPath,
+        method: (init.method ?? "GET").toUpperCase(),
+        headers: {
+          ...headers,
+          ...(init.headers ?? {}),
+        },
+        bodyType,
+        body: typeof init.body === "string" ? init.body : undefined,
+        signal,
+      });
 
-    const headersObj: Record<string, string> = {};
-    response.headers.forEach((value, key) => {
-      headersObj[key] = value;
-    });
-
-    const contentType = response.headers.get("content-type");
-    let body: T | string | null = null;
-    if (contentType?.includes("application/json")) {
-      body = await response.json();
-    } else if (contentType) {
-      body = (await response.text()) as string;
-    }
-
-    if (!response.ok) {
-      if (response.status === 401 && !opts.skipUnauthorizedHandler && unauthorizedHandler) {
-        await unauthorizedHandler();
+      if (result.error) {
+        throw result.error;
       }
 
-      const message = (body && typeof body === "object" ? (body as any).message : null) || "Request failed";
-      const error = new Error(message) as Error & {
-        status?: number;
-        details?: Record<string, string[]>;
+      if (!result.response) {
+        throw new Error("Request cancelled");
+      }
+
+      const contentType = (result.response.headers["content-type"] ?? "").toLowerCase();
+      let body: T | string | null = null;
+      if (contentType.includes("application/json")) {
+        try {
+          body = JSON.parse(result.response.body) as T;
+        } catch {
+          body = result.response.body;
+        }
+      } else if (result.response.body) {
+        body = result.response.body;
+      }
+      return {
+        status: result.response.status,
+        headers: result.response.headers,
+        body,
       };
-      error.status = response.status;
-      if (body && typeof body === "object" && "errors" in body) {
-        error.details = (body as { errors?: Record<string, string[]> }).errors ?? undefined;
-      }
-      throw error;
-    }
-
-    return {
-      status: response.status,
-      headers: headersObj,
-      body,
-    };
-  })();
+    })();
 
   pendingRequests.set(key, fetchPromise);
 

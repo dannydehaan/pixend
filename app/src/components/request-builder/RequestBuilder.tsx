@@ -267,25 +267,17 @@ const RequestBuilder = () => {
       }
       setMissingVariables(Array.from(missingTracker));
 
-      const response = await fetch(resolvedUrl, {
-        ...init,
+      const httpResult = await sendRequest({
+        url: resolvedUrl,
+        method,
         headers: resolvedHeaders,
-        body: shouldAttachBody ? resolvedBody : undefined,
+        body: shouldAttachBody && resolvedBody ? resolvedBody : undefined,
+        bodyType: shouldAttachBody ? requestState.bodyType : "none",
       });
-      setResponseStatus(response.status);
 
-      const headersObj: Record<string, string> = {};
-      response.headers.forEach((value, key) => {
-        headersObj[key] = value;
-      });
-      setResponseHeaders(headersObj);
-
-      if (method !== "HEAD") {
-        const payload = await response.text();
-        setResponseText(payload);
-      } else {
-        setResponseText("");
-      }
+      setResponseStatus(httpResult.response?.status ?? null);
+      setResponseHeaders(httpResult.response?.headers ?? {});
+      setResponseText(httpResult.response?.body ?? "");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown request error";
       setResponseStatus(null);
