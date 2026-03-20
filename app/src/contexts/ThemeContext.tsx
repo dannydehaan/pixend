@@ -1,4 +1,15 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import { apiClient } from "../services/api";
+import { useAuth } from "./AuthContext";
 
 export type Theme = {
   id: string;
@@ -172,7 +183,6 @@ const findTheme = (id: string) => THEMES.find((theme) => theme.id === id) ?? THE
 const toCssVar = (key: string) => `--${key.replace(/([A-Z])/g, "-$1").toLowerCase()}`;
 
 const applyTheme = (theme: Theme) => {
-  console.log("Applying theme:", theme.id);
   Object.entries(theme.colors).forEach(([key, value]) => {
     document.documentElement.style.setProperty(toCssVar(key), value);
   });
@@ -188,34 +198,51 @@ type ThemeContextValue = {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
+  const { user, isAuthenticated, isGuest } = useAuth();
   const [themeId, setThemeId] = useState(DEFAULT_THEME);
+  const lastRemoteTheme = useRef<string | null>(null);
 
-  useEffect(() => {
-    const saved = window.localStorage.getItem(STORAGE_KEY) ?? DEFAULT_THEME;
-    const theme = findTheme(saved);
-    applyTheme(theme);
-    setThemeId(theme.id);
-  }, []);
-
-  const setTheme = (nextId: string) => {
+  const persistTheme = useCallback((nextId: string) => {
     const theme = findTheme(nextId);
     window.localStorage.setItem(STORAGE_KEY, theme.id);
+    applyTheme(theme);
     setThemeId(theme.id);
-  };
-  const setThemeMemo = useCallback(
+    return theme.id;
+  }, []);
+
+  const setTheme = useCallback(
     (nextId: string) => {
-      const theme = findTheme(nextId);
-      if (!theme) return;
-      window.localStorage.setItem(STORAGE_KEY, theme.id);
-      applyTheme(theme);
-      setThemeId(theme.id);
+      const appliedId = persistTheme(nextId);
+      if (isAuthenticated && !isGuest) {
+        apiClient.updateUserThemePreference(appliedId).catch(() => {});
+      }
     },
-    [],
+    [isAuthenticated, isGuest, persistTheme],
   );
 
+  useEffect(() => {
+    const saved = window.localStorage.getItem(STORAGE_KEY);
+    persistTheme(saved ?? DEFAULT_THEME);
+  }, [persistTheme]);
+
+  useEffect(() => {
+    const remoteTheme = user?.preferred_theme;
+    if (!remoteTheme) {
+      lastRemoteTheme.current = null;
+      return;
+    }
+
+    if (lastRemoteTheme.current === remoteTheme) {
+      return;
+    }
+
+    lastRemoteTheme.current = remoteTheme;
+    persistTheme(remoteTheme);
+  }, [persistTheme, user?.preferred_theme]);
+
   const value = useMemo(
-    () => ({ themeId, currentTheme: findTheme(themeId), setTheme: setThemeMemo, themes: THEMES }),
-    [themeId, setThemeMemo],
+    () => ({ themeId, currentTheme: findTheme(themeId), setTheme, themes: THEMES }),
+    [setTheme, themeId],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

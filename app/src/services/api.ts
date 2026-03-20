@@ -221,6 +221,7 @@ export type UserSummary = {
   plan?: string;
   is_premium?: boolean;
   encryption_salt?: string | null;
+  preferred_theme?: string;
 };
 
 export type WorkspaceType = {
@@ -432,6 +433,16 @@ export const apiClient = {
       skipUnauthorizedHandler: true,
     });
     return response.body as { user: UserSummary };
+  },
+
+  async updateUserThemePreference(themeId: string) {
+    await request<void>(
+      "/user/theme",
+      {
+        method: "PATCH",
+        body: JSON.stringify({ theme: themeId }),
+      },
+    );
   },
 };
 

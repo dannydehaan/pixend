@@ -9,18 +9,18 @@ import SettingsDrawer from "./components/SettingsDrawer";
 
 function App() {
   return (
-    <ThemeProvider>
-      <SettingsProvider>
-        <HashRouter>
-          <AuthProvider>
+    <HashRouter>
+      <AuthProvider>
+        <ThemeProvider>
+          <SettingsProvider>
             <WorkspacesProvider>
               <AppRouter />
               <SettingsDrawer />
             </WorkspacesProvider>
-          </AuthProvider>
-        </HashRouter>
-      </SettingsProvider>
-    </ThemeProvider>
+          </SettingsProvider>
+        </ThemeProvider>
+      </AuthProvider>
+    </HashRouter>
   );
 }
 

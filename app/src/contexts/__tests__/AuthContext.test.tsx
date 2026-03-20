@@ -110,7 +110,12 @@ const resetMocks = () => {
   }
 };
 
-const testUser: UserSummary = { id: 1, name: "Jane", email: "jane@example.com" };
+const testUser: UserSummary = {
+  id: 1,
+  name: "Jane",
+  email: "jane@example.com",
+  preferred_theme: "pixels",
+};
 
 describe("AuthProvider", () => {
   beforeEach(() => {

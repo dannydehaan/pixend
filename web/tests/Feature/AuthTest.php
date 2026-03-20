@@ -20,7 +20,7 @@ it('allows a user to register via API', function () {
 
     $response->assertStatus(201)
         ->assertJsonStructure([
-            'user' => ['id', 'name', 'email'],
+            'user' => ['id', 'name', 'email', 'preferred_theme'],
             'token',
         ]);
 
@@ -59,7 +59,7 @@ it('returns a token when logging in with valid credentials', function () {
 
     $response->assertOk()
         ->assertJsonStructure([
-            'user' => ['id', 'name', 'email'],
+            'user' => ['id', 'name', 'email', 'preferred_theme'],
             'token',
         ]);
 });
@@ -97,6 +97,7 @@ it('returns the current user via /auth/me when the token is valid', function () 
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'preferred_theme' => config('themes.default'),
             ],
         ]);
 });
