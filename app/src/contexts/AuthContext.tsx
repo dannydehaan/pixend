@@ -102,15 +102,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         action === "login"
           ? await apiClient.login(payload as LoginPayload)
           : await apiClient.register(payload as RegisterPayload);
-
-      await apiClient.persistToken(result.token);
-      setToken(result.token);
-      setUser(result.user);
-      setStatus("authenticated");
-      if (!result.user.encryption_salt) {
-        throw new Error("Missing encryption salt");
+      if (!result || !result.user) {
+        throw new Error("Authentication response is missing user information.");
       }
-      const derivedKey = await deriveKeyFromPassword(payload.password, result.user.encryption_salt);
+      if (!result.token) {
+        throw new Error("Authentication response is missing an authentication token.");
+      }
+      const user = result.user;
+      const token = result.token;
+      if (!user.encryption_salt) {
+        throw new Error("Missing encryption salt in user data.");
+      }
+
+      await apiClient.persistToken(token);
+      setToken(token);
+      setUser(user);
+      setStatus("authenticated");
+      const derivedKey = await deriveKeyFromPassword(payload.password, user.encryption_salt);
       setEncryptionKey(derivedKey);
       navigate("/collections", { replace: true });
       window.dispatchEvent(new Event("pixend:refresh-workspaces"));

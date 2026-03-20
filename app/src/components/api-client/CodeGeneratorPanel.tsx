@@ -6,6 +6,8 @@ import {
   type CodeGeneratorRequest,
   type CodeOption,
 } from "../../lib/codeGenerator";
+import TerminalPreview from "./TerminalPreview";
+import { usePlatform } from "../../hooks/usePlatform";
 
 type CodeGeneratorPanelProps = {
   isOpen: boolean;
@@ -18,6 +20,7 @@ const allOptions = languageGroups.flatMap((group) => group.options);
 const CodeGeneratorPanel = ({ isOpen, onClose, request }: CodeGeneratorPanelProps) => {
   const [selectedOption, setSelectedOption] = useState<CodeOption>(defaultCodeOption);
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied">("idle");
+  const platformVariant = usePlatform();
 
   useEffect(() => {
     setCopyStatus("idle");
@@ -99,6 +102,7 @@ const CodeGeneratorPanel = ({ isOpen, onClose, request }: CodeGeneratorPanelProp
               {code}
             </pre>
           </div>
+          <TerminalPreview variant={platformVariant} />
           <p className="text-xs text-on-surface-variant">
             Some frameworks are still a work in progress. Select another language to regenerate with minimal delay.
           </p>

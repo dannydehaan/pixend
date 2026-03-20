@@ -46,8 +46,12 @@ export const WorkspaceLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { openSettings } = useSettings();
+  const { openSettings, closeSettings } = useSettings();
   const isEnvironmentsActive = location.pathname.startsWith("/environments");
+  const handlePrimaryNavClick = (path: string) => {
+    closeSettings();
+    navigate(path);
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-surface text-on-surface">
@@ -78,10 +82,10 @@ export const WorkspaceLayout = () => {
           {primaryNavItems.map((link) => {
             const isActive = link.matches(location.pathname);
             return (
-              <button
-                key={link.label}
-                type="button"
-                onClick={() => navigate(link.path)}
+                <button
+                  key={link.label}
+                  type="button"
+                  onClick={() => handlePrimaryNavClick(link.path)}
                 className={`flex items-center gap-3 px-3 py-3 rounded transition-all text-xs font-semibold uppercase tracking-widest ${
                   isActive
                     ? "bg-[var(--border)] text-[var(--primary)] border-r-2 border-[var(--primary)]"
