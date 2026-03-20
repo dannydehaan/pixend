@@ -1,13 +1,30 @@
+mod network;
+mod speedtest;
+#[allow(dead_code)]
+mod throttle;
+
+use network::{NetworkPreset, NetworkProfile, NetworkState, SharedNetworkState};
 use once_cell::sync::Lazy;
+use speedtest::{cancel_speedtest, run_speedtest};
 use std::{
     path::{Path, PathBuf},
     process::{Child, Command},
-    sync::Mutex,
+    sync::{Arc, Mutex},
 };
+use tauri::AppHandle;
 
 static PROXY_PROCESS: Lazy<Mutex<Option<Child>>> = Lazy::new(|| Mutex::new(None));
-static APP_DIRECTORY: Lazy<PathBuf> =
-    Lazy::new(|| Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().to_path_buf());
+static APP_DIRECTORY: Lazy<PathBuf> = Lazy::new(|| {
+    Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .unwrap()
+        .to_path_buf()
+});
+static NETWORK_STATE: Lazy<SharedNetworkState> = Lazy::new(|| Arc::new(NetworkState::new()));
+
+fn network_state() -> &'static SharedNetworkState {
+    &NETWORK_STATE
+}
 
 fn proxy_script_path() -> PathBuf {
     APP_DIRECTORY.join("scripts").join("proxy-server.js")
@@ -29,6 +46,35 @@ fn spawn_proxy_process() -> Result<Child, String> {
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
+}
+
+#[tauri::command]
+async fn run_speedtest_command(app_handle: AppHandle) -> Result<(), String> {
+    run_speedtest(app_handle).await
+}
+
+#[tauri::command]
+async fn cancel_speedtest_command() -> Result<bool, String> {
+    cancel_speedtest().await
+}
+
+#[tauri::command]
+async fn get_network_profile() -> Result<NetworkProfile, String> {
+    Ok(network_state().get_profile().await)
+}
+
+#[tauri::command]
+async fn set_network_profile(profile: NetworkProfile) -> Result<NetworkProfile, String> {
+    network_state()
+        .set_profile(profile.clone())
+        .await
+        .map_err(|err| err.to_string())?;
+    Ok(profile)
+}
+
+#[tauri::command]
+fn list_network_presets() -> Vec<NetworkPreset> {
+    NetworkPreset::all()
 }
 
 #[tauri::command]
@@ -67,7 +113,16 @@ pub fn run() {
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_store::Builder::default().build())
-        .invoke_handler(tauri::generate_handler![greet, start_proxy, stop_proxy])
+        .invoke_handler(tauri::generate_handler![
+            greet,
+            start_proxy,
+            stop_proxy,
+            get_network_profile,
+            set_network_profile,
+            list_network_presets,
+            run_speedtest_command,
+            cancel_speedtest_command,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

@@ -2,6 +2,19 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { clearNetworkLogs, subscribeNetworkLogs, type NetworkLog } from "../../services/networkLogs";
 import UpgradePrompt from "../../components/UpgradePrompt";
+import {
+  applyNetworkProfile,
+  getNetworkProfile,
+  listNetworkPresets,
+  type NetworkPreset,
+  type NetworkProfile,
+} from "../../services/networkLimiter";
+import {
+  cancelSpeedtest,
+  runSpeedtest,
+  subscribeSpeedtest,
+  type EventPayloads,
+} from "../../services/speedtest";
 
 const METHOD_FILTERS = ["ALL", "GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
 
@@ -24,6 +37,24 @@ const NetworkInspectorScreen = () => {
   const [search, setSearch] = useState("");
   const [methodFilter, setMethodFilter] = useState(METHOD_FILTERS[0]);
   const [activeLogId, setActiveLogId] = useState<string | null>(null);
+  const [presets, setPresets] = useState<NetworkPreset[]>([]);
+  const [activeProfile, setActiveProfile] = useState<NetworkProfile | null>(null);
+  const [isLimiterLoading, setIsLimiterLoading] = useState(true);
+  const [limiterError, setLimiterError] = useState<string | null>(null);
+  const [applyingPresetId, setApplyingPresetId] = useState<string | null>(null);
+  const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
+  const [customDownload, setCustomDownload] = useState("0");
+  const [customUpload, setCustomUpload] = useState("0");
+  const [customLatency, setCustomLatency] = useState("0");
+  const [customError, setCustomError] = useState<string | null>(null);
+  const [isSavingCustom, setIsSavingCustom] = useState(false);
+  const [speedtestStatus, setSpeedtestStatus] = useState<"idle" | "running" | "completed" | "cancelled" | "failed">("idle");
+  const [speedtestPhase, setSpeedtestPhase] = useState<string | null>(null);
+  const [speedtestProgress, setSpeedtestProgress] = useState<number | null>(null);
+  const [speedtestPing, setSpeedtestPing] = useState<number | null>(null);
+  const [speedtestDownload, setSpeedtestDownload] = useState<number | null>(null);
+  const [speedtestUpload, setSpeedtestUpload] = useState<number | null>(null);
+  const [speedtestError, setSpeedtestError] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = subscribeNetworkLogs((next) => setLogs(next));
@@ -35,6 +66,100 @@ const NetworkInspectorScreen = () => {
       setActiveLogId(logs[0].id);
     }
   }, [logs, activeLogId]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadLimiterData = async () => {
+      try {
+        const [presetList, profile] = await Promise.all([listNetworkPresets(), getNetworkProfile()]);
+        if (!isMounted) return;
+        setPresets(presetList);
+        setActiveProfile(profile);
+        setSelectedPresetId(profile.preset_id);
+        if (profile.preset_id === "custom") {
+          setCustomDownload(profile.download_kbps.toString());
+          setCustomUpload(profile.upload_kbps.toString());
+          setCustomLatency(profile.latency_ms.toString());
+        }
+      } catch (error) {
+        if (!isMounted) return;
+        const message = error instanceof Error ? error.message : "Unable to load network limiter settings.";
+        setLimiterError(message);
+      } finally {
+        if (isMounted) {
+          setIsLimiterLoading(false);
+        }
+      }
+    };
+    loadLimiterData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const cancel = subscribeSpeedtest("speedtest-started", () => {
+      setSpeedtestStatus("running");
+      setSpeedtestPhase("ping");
+      setSpeedtestProgress(null);
+      setSpeedtestError(null);
+    });
+    const cancelPing = subscribeSpeedtest("speedtest-ping", (payload) => {
+      setSpeedtestPing(payload.latency_ms);
+    });
+    const cancelDownload = subscribeSpeedtest("speedtest-download", (payload) => {
+      setSpeedtestPhase(payload.phase);
+      setSpeedtestProgress(payload.progress);
+      setSpeedtestDownload(payload.kbps);
+    });
+    const cancelUpload = subscribeSpeedtest("speedtest-upload", (payload) => {
+      setSpeedtestPhase(payload.phase);
+      setSpeedtestProgress(payload.progress);
+      setSpeedtestUpload(payload.kbps);
+    });
+    const cancelCompleted = subscribeSpeedtest("speedtest-completed", (payload) => {
+      setSpeedtestStatus("completed");
+      setSpeedtestPing(payload.latency_ms);
+      setSpeedtestDownload(payload.download_kbps);
+      setSpeedtestUpload(payload.upload_kbps);
+      setSpeedtestProgress(1);
+      setSpeedtestPhase(null);
+    });
+    const cancelCancelled = subscribeSpeedtest("speedtest-cancelled", () => {
+      setSpeedtestStatus("cancelled");
+      setSpeedtestPhase(null);
+      setSpeedtestProgress(null);
+    });
+    const cancelFailed = subscribeSpeedtest("speedtest-failed", (payload) => {
+      setSpeedtestStatus("failed");
+      setSpeedtestError(payload.error);
+      setSpeedtestPhase(null);
+      setSpeedtestProgress(null);
+    });
+    return () => {
+      cancel();
+      cancelPing();
+      cancelDownload();
+      cancelUpload();
+      cancelCompleted();
+      cancelCancelled();
+      cancelFailed();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (activeProfile && activeProfile.preset_id !== "custom") {
+      setSelectedPresetId(activeProfile.preset_id);
+    }
+  }, [activeProfile]);
+
+  useEffect(() => {
+    if (activeProfile?.preset_id === "custom") {
+      setCustomDownload(activeProfile.download_kbps.toString());
+      setCustomUpload(activeProfile.upload_kbps.toString());
+      setCustomLatency(activeProfile.latency_ms.toString());
+    }
+  }, [activeProfile]);
 
   const filteredLogs = useMemo(() => {
     return logs.filter((log) => {
@@ -50,6 +175,94 @@ const NetworkInspectorScreen = () => {
   const handleClearLogs = () => {
     clearNetworkLogs();
     setActiveLogId(null);
+  };
+
+  const handlePresetSelect = async (preset: NetworkPreset) => {
+    setSelectedPresetId(preset.preset_id);
+    if (preset.preset_id === "custom") {
+      setCustomError(null);
+      if (activeProfile?.preset_id === "custom") {
+        setCustomDownload(activeProfile.download_kbps.toString());
+        setCustomUpload(activeProfile.upload_kbps.toString());
+        setCustomLatency(activeProfile.latency_ms.toString());
+      }
+      return;
+    }
+    setLimiterError(null);
+    setApplyingPresetId(preset.preset_id);
+    try {
+      const updatedProfile = await applyNetworkProfile({
+        preset_id: preset.preset_id,
+        label: preset.label,
+        enabled: preset.enabled,
+        download_kbps: preset.download_kbps,
+        upload_kbps: preset.upload_kbps,
+        latency_ms: preset.latency_ms,
+      });
+      setActiveProfile(updatedProfile);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to apply the selected preset.";
+      setLimiterError(message);
+    } finally {
+      setApplyingPresetId(null);
+    }
+  };
+
+  const handleCustomSave = async () => {
+    setCustomError(null);
+    setLimiterError(null);
+    const parsedDownload = Number(customDownload);
+    const parsedUpload = Number(customUpload);
+    const parsedLatency = Number(customLatency);
+
+    if (!parsedDownload || parsedDownload <= 0) {
+      setCustomError("Download limit must be greater than zero.");
+      return;
+    }
+    if (!parsedUpload || parsedUpload <= 0) {
+      setCustomError("Upload limit must be greater than zero.");
+      return;
+    }
+    if (Number.isNaN(parsedLatency) || parsedLatency < 0) {
+      setCustomError("Latency must be zero or positive.");
+      return;
+    }
+
+    setIsSavingCustom(true);
+    try {
+      const updatedProfile = await applyNetworkProfile({
+        preset_id: "custom",
+        label: "Custom",
+        enabled: true,
+        download_kbps: parsedDownload,
+        upload_kbps: parsedUpload,
+        latency_ms: parsedLatency,
+      });
+      setActiveProfile(updatedProfile);
+      setCustomError(null);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to apply custom limits.";
+      setCustomError(message);
+    } finally {
+      setIsSavingCustom(false);
+    }
+  };
+
+  const handleRunSpeedtest = async () => {
+    setSpeedtestError(null);
+    try {
+      await runSpeedtest();
+    } catch (error) {
+      setSpeedtestError(error instanceof Error ? error.message : "Failed to start speed test.");
+    }
+  };
+
+  const handleCancelSpeedtest = async () => {
+    try {
+      await cancelSpeedtest();
+    } catch (error) {
+      setSpeedtestError(error instanceof Error ? error.message : "Failed to cancel speed test.");
+    }
   };
 
   if (!isPaidUser) {
@@ -71,6 +284,183 @@ const NetworkInspectorScreen = () => {
           Capture every request, inspect the headers and responses, and stream everything through the local proxy.
         </p>
       </header>
+      <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-sm">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.3em] text-[var(--muted)]">Speed test</p>
+            <p className="text-sm text-on-surface-variant">
+              Measure latency, download, and upload throughput using the built-in runner.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            {speedtestStatus === "running" ? (
+              <button
+                type="button"
+                onClick={handleCancelSpeedtest}
+                className="rounded-full border border-outline-variant/60 px-4 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-error hover:border-error"
+              >
+                Cancel
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleRunSpeedtest}
+                className="rounded-full bg-[var(--primary)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-on-primary hover:bg-[var(--primary)]/90"
+              >
+                Run speed test
+              </button>
+            )}
+          </div>
+        </div>
+        <div className="mt-4 grid gap-2 text-[12px] font-semibold uppercase tracking-[0.3em] text-on-surface-variant">
+          <div className="flex items-center justify-between">
+            <span>Status</span>
+            <span>{speedtestStatus}</span>
+          </div>
+          {speedtestPhase && (
+            <div className="flex items-center justify-between">
+              <span>Phase</span>
+              <span>{speedtestPhase}</span>
+            </div>
+          )}
+          {speedtestProgress !== null && (
+            <div className="flex items-center justify-between">
+              <span>Progress</span>
+              <span>{Math.round(speedtestProgress * 100)}%</span>
+            </div>
+          )}
+          {speedtestPing && (
+            <div className="flex items-center justify-between text-[11px] tracking-[0.2em]">
+              <span>Latency</span>
+              <span>{speedtestPing.toFixed(1)} ms</span>
+            </div>
+          )}
+          {speedtestDownload && (
+            <div className="flex items-center justify-between text-[11px] tracking-[0.2em]">
+              <span>Download</span>
+              <span>{speedtestDownload.toFixed(0)} KB/s</span>
+            </div>
+          )}
+          {speedtestUpload && (
+            <div className="flex items-center justify-between text-[11px] tracking-[0.2em]">
+              <span>Upload</span>
+              <span>{speedtestUpload.toFixed(0)} KB/s</span>
+            </div>
+          )}
+          {speedtestError && <p className="text-xs text-red-500">{speedtestError}</p>}
+        </div>
+      </section>
+      <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-sm">
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.3em] text-[var(--muted)]">Network limiter</p>
+              <h2 className="text-2xl font-black text-on-surface">
+                {isLimiterLoading ? "Loading..." : activeProfile?.label ?? "Unavailable"}
+              </h2>
+              <p className="text-sm text-on-surface-variant">
+                {activeProfile ? (
+                  activeProfile.enabled
+                    ? `${activeProfile.download_kbps} KB/s ↓ · ${activeProfile.upload_kbps} KB/s ↑ · ${activeProfile.latency_ms} ms latency`
+                    : "Throttling disabled · no limit"
+                ) : (
+                  "Active profile is not available yet."
+                )}
+              </p>
+            </div>
+            <span
+              className={`text-xs font-semibold uppercase tracking-[0.4em] ${
+                activeProfile?.enabled ? "text-[var(--primary)]" : "text-on-surface-variant"
+              }`}
+            >
+              {activeProfile?.enabled ? "Limited" : "Unlimited"}
+            </span>
+          </div>
+          <p className="text-[11px] text-on-surface-variant">
+            Speeds are expressed in KB/s (kilobytes per second). Custom limits will be adjustable soon.
+          </p>
+          {limiterError && <p className="text-xs text-red-500">{limiterError}</p>}
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4">
+          {isLimiterLoading && <p className="col-span-full text-xs text-on-surface-variant">Loading presets...</p>}
+          {!isLimiterLoading &&
+            presets.map((preset) => {
+              const isActive = selectedPresetId === preset.preset_id;
+              const isCustom = preset.preset_id === "custom";
+              const isApplying = applyingPresetId === preset.preset_id;
+              return (
+                <button
+                  key={preset.preset_id}
+                  type="button"
+                  onClick={() => handlePresetSelect(preset)}
+                  className={`flex flex-col gap-1 rounded-2xl border p-3 text-left text-[12px] font-semibold uppercase tracking-[0.3em] transition-all ${
+                    isActive
+                      ? "border-primary bg-primary/10 text-[var(--primary)]"
+                      : "border-outline-variant/40 text-on-surface hover:border-[var(--text)]"
+                  } ${isCustom ? "opacity-60 cursor-not-allowed" : "hover:bg-[var(--border)]/30"}`}
+                >
+                  <span>{preset.label}</span>
+                  <span className="text-[10px] font-normal normal-case tracking-tight text-on-surface-variant">
+                    {isCustom
+                      ? "Custom limits"
+                      : preset.enabled
+                        ? `${preset.download_kbps} ↓ · ${preset.upload_kbps} ↑ · ${preset.latency_ms} ms`
+                        : "No limit"}
+                  </span>
+                  {isApplying && <span className="text-[10px] text-[var(--primary)]">Applying…</span>}
+                </button>
+              );
+            })}
+        </div>
+        {selectedPresetId === "custom" && (
+          <div className="mt-4 rounded-2xl border border-outline-variant/40 bg-[var(--surface)] p-4 text-xs uppercase tracking-[0.3em] text-on-surface">
+            <p className="text-[11px] text-on-surface-variant">Custom limits</p>
+            <div className="mt-3 grid gap-2 md:grid-cols-3">
+              <label className="flex flex-col gap-1 text-[12px] font-semibold tracking-[0.35em]">
+                Download (KB/s)
+                <input
+                  type="number"
+                  min={1}
+                  value={customDownload}
+                  onChange={(event) => setCustomDownload(event.target.value)}
+                  className="rounded-lg border border-outline-variant/40 bg-[var(--surface)] px-3 py-2 text-[12px] font-semibold uppercase tracking-[0.35em] text-on-surface"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-[12px] font-semibold tracking-[0.35em]">
+                Upload (KB/s)
+                <input
+                  type="number"
+                  min={1}
+                  value={customUpload}
+                  onChange={(event) => setCustomUpload(event.target.value)}
+                  className="rounded-lg border border-outline-variant/40 bg-[var(--surface)] px-3 py-2 text-[12px] font-semibold uppercase tracking-[0.35em] text-on-surface"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-[12px] font-semibold tracking-[0.35em]">
+                Latency (ms)
+                <input
+                  type="number"
+                  min={0}
+                  value={customLatency}
+                  onChange={(event) => setCustomLatency(event.target.value)}
+                  className="rounded-lg border border-outline-variant/40 bg-[var(--surface)] px-3 py-2 text-[12px] font-semibold uppercase tracking-[0.35em] text-on-surface"
+                />
+              </label>
+            </div>
+            {customError && <p className="mt-2 text-[11px] text-red-500">{customError}</p>}
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={handleCustomSave}
+                disabled={isSavingCustom}
+                className="rounded-full bg-[var(--primary)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.4em] text-on-primary hover:bg-[var(--primary)]/90 disabled:opacity-50"
+              >
+                {isSavingCustom ? "Saving…" : "Apply custom"}
+              </button>
+            </div>
+          </div>
+        )}
+      </section>
       <div className="flex flex-1 gap-6 overflow-hidden">
         <section className="flex w-[360px] flex-col gap-4 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm">
           <div className="flex items-center justify-between gap-2">
