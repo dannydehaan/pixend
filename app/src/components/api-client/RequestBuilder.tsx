@@ -59,7 +59,7 @@ const createQueryParam = (key = "", value = ""): QueryParam => ({
   value,
 });
 
-const initialUrl = "https://mijn.firstlogistics.test/api/app/1.0/login";
+const initialUrl = "https://mijn.firstlogistics.test/api/app/1.0/auth/login";
 
 const sanitizeJsonInput = (value: string) =>
   value.replace(/[“”]/g, '"').replace(/[‘’]/g, "'");
