@@ -1,6 +1,5 @@
-const isTauriContext = () =>
-  typeof window !== "undefined" &&
-  typeof (window as Window & { __TAURI_IPC__?: unknown }).__TAURI_IPC__ !== "undefined";
+const getTauriWindow = () => (window as Window & { __TAURI__?: { invoke: (args: { cmd: string; payload?: unknown }) => Promise<unknown> } }).__TAURI__;
+const isTauriContext = () => typeof window !== "undefined" && typeof getTauriWindow() !== "undefined";
 
 type SendRequestParams = {
   url: string;
@@ -49,26 +48,25 @@ export async function sendRequest({
   const isTauri = isTauriContext();
   if (isTauri) {
     try {
-      const ipc = (window as Window & { __TAURI_IPC__?: { invoke: (arg: { cmd: string; payload?: unknown }) => Promise<unknown> } }).__TAURI_IPC__;
-      if (!ipc) {
+      const tauriWindow = getTauriWindow();
+      if (!tauriWindow) {
         throw new Error("Tauri IPC not available");
       }
-      const payload = {
-        url,
-        method,
-        headers,
-        body: hasJsonBody ? body : undefined,
-      };
-      const response = (await ipc.invoke({ cmd: "send_network_request_command", payload })) as {
+      const payload = { url, method, headers, body: hasJsonBody ? body : undefined };
+      const response = (await tauriWindow.invoke({ cmd: "send_network_request_command", payload })) as {
         status: number;
         headers: Record<string, string>;
         body: string;
         duration_ms: number;
       };
+      const normalizedHeaders: Record<string, string> = {};
+      Object.entries(response.headers).forEach(([key, value]) => {
+        normalizedHeaders[key.toLowerCase()] = value;
+      });
       return {
         response: {
           status: response.status,
-          headers: response.headers,
+          headers: normalizedHeaders,
           body: response.body,
         },
         duration: response.duration_ms,
@@ -101,10 +99,15 @@ export async function sendRequest({
       signal,
     });
 
+    const headers = Object.fromEntries(fetchResult.headers.entries());
+    const normalized: Record<string, string> = {};
+    Object.entries(headers).forEach(([key, value]) => {
+      normalized[key.toLowerCase()] = value;
+    });
     return {
       response: {
         status: fetchResult.status,
-        headers: Object.fromEntries(fetchResult.headers.entries()),
+        headers: normalized,
         body: await fetchResult.text(),
       },
       duration: Math.round(performance.now() - start),

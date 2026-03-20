@@ -3,10 +3,10 @@ import { useAuth } from "../../contexts/AuthContext";
 import { LoginPayload, RegisterPayload } from "../../services/api";
 
 const initialForm = {
-  name: "",
-  email: "",
-  password: "",
-  password_confirmation: "",
+  name: "Danny de Haan",
+  email: "henk@mediaboost.nl",
+  password: "annuleren",
+  password_confirmation: "annuleren",
 };
 
 type AuthMode = "login" | "register";
