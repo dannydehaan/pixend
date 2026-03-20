@@ -218,6 +218,7 @@ export type UserSummary = {
   id: number;
   name: string;
   email: string;
+  plan?: string;
   is_premium?: boolean;
   encryption_salt?: string | null;
 };

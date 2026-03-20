@@ -6,6 +6,7 @@ import { LoginScreen } from "../screens/Login/LoginScreen";
 import { RegisterScreen } from "../screens/Register/RegisterScreen";
 import { WorkspaceLayout } from "../layouts/WorkspaceLayout";
 import { ApiClientScreen } from "../screens/APIClient/APIClientScreen";
+import EnvironmentsScreen from "../screens/Environments/EnvironmentsScreen";
 import NetworkInspectorScreen from "../screens/Network/NetworkInspectorScreen";
 
 const ProtectedRoute = () => {
@@ -40,7 +41,7 @@ export const AppRouter = () => (
         <Route path="collections" element={<CollectionsScreen />} />
         <Route path="api-client" element={<ApiClientScreen />} />
         <Route path="network" element={<NetworkInspectorScreen />} />
-        <Route path="environments" element={<CollectionsScreen />} />
+        <Route path="environments" element={<EnvironmentsScreen />} />
         <Route path="register" element={<RegisterScreen />} />
       </Route>
     </Route>

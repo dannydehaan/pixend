@@ -9,8 +9,8 @@ type UpgradePromptProps = {
 
 const UpgradePrompt = ({
   title = "Upgrade required",
-  description = "The Network Inspector and API proxy are reserved for paid plans.",
-  actionCopy = "Upgrade and enable proxy",
+  description = "Upgrade your plan to use the Network Inspector and Proxy features",
+  actionCopy = "Upgrade your plan",
 }: UpgradePromptProps) => {
   const { openSettings } = useSettings();
   const footerMessage = useMemo(

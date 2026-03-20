@@ -42,7 +42,7 @@ const utilityNavItems: UtilityNavItem[] = [
 
 export const WorkspaceLayout = () => {
   const { isGuest, user } = useAuth();
-  const isPaidUser = Boolean(user?.is_premium);
+  const isPaidUser = Boolean(user?.plan && user.plan !== "free");
   const navigate = useNavigate();
   const location = useLocation();
 

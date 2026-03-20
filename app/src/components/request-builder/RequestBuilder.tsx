@@ -4,8 +4,13 @@ import RequestTabs, { type TabOption } from "./RequestTabs";
 import UrlInput from "./UrlInput";
 import { collectMissingVariables, resolveVariablesRecursive } from "../../utils/resolveVariables";
 import { resolveFaker } from "../../utils/fakerResolver";
-import { loadEnvironments, saveEnvironment } from "../../services/environmentService";
+import { EnvironmentPayload, loadEnvironments, saveEnvironment } from "../../services/environmentService";
 import { useAuth } from "../../contexts/AuthContext";
+import {
+  getActiveEnvironmentId,
+  setActiveEnvironmentId,
+  subscribeActiveEnvironmentId,
+} from "../../services/environmentSelection";
 
 const defaultMethods = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
 const FAKER_VARIABLES = [
@@ -72,8 +77,17 @@ const RequestBuilder = () => {
   const [environmentId, setEnvironmentId] = useState<string>("default-env");
   const [environmentName, setEnvironmentName] = useState<string>("Local Environment");
   const [environmentHydrated, setEnvironmentHydrated] = useState(false);
+  const [availableEnvironments, setAvailableEnvironments] = useState<EnvironmentPayload[]>([]);
+  const [selectedEnvironmentId, setSelectedEnvironmentId] = useState<string | null>(() => getActiveEnvironmentId());
   const { encryptionKey, isAuthenticated } = useAuth();
   const urlInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = subscribeActiveEnvironmentId((value) => {
+      setSelectedEnvironmentId(value);
+    });
+    return unsubscribe;
+  }, []);
 
   const environmentVariables = useMemo(() => {
     return environmentEntries.reduce<Record<string, string>>((acc, entry) => {
@@ -111,15 +125,18 @@ const RequestBuilder = () => {
     loadEnvironments(encryptionKey, isAuthenticated)
       .then((records) => {
         if (!isMounted) return;
-        if (records.length > 0) {
-          const record = records[0];
-          setEnvironmentId(record.id);
-          setEnvironmentName(record.name);
-          hydrateEntriesFromRecord(record.variables);
+        setAvailableEnvironments(records);
+        const storedId = getActiveEnvironmentId();
+        const fallbackId = records[0]?.id ?? null;
+        const resolvedId =
+          storedId && records.some((env) => env.id === storedId) ? storedId : fallbackId;
+        if (resolvedId) {
+          setSelectedEnvironmentId(resolvedId);
+          setActiveEnvironmentId(resolvedId);
+        } else {
+          setSelectedEnvironmentId(null);
+          setActiveEnvironmentId(null);
         }
-      })
-      .catch(() => {
-        // ignore
       })
       .finally(() => {
         if (isMounted) {
@@ -133,7 +150,19 @@ const RequestBuilder = () => {
   }, [encryptionKey, isAuthenticated]);
 
   useEffect(() => {
-    if (!encryptionKey || !environmentHydrated) {
+    if (!environmentHydrated) return;
+    const record = availableEnvironments.find((env) => env.id === selectedEnvironmentId) ?? null;
+    if (record) {
+      setEnvironmentId(record.id);
+      setEnvironmentName(record.name);
+      hydrateEntriesFromRecord(record.variables);
+    } else {
+      setEnvironmentEntries([]);
+    }
+  }, [availableEnvironments, selectedEnvironmentId, environmentHydrated]);
+
+  useEffect(() => {
+    if (!encryptionKey || !environmentHydrated || !selectedEnvironmentId) {
       return;
     }
 
