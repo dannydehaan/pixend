@@ -32,19 +32,6 @@ const ResponseViewer = ({ response, isLoading, errorMessage }: ResponseViewerPro
   const responseBody = response?.body ?? "";
   const headerEntries = useMemo(() => (response ? Object.entries(response.headers) : []), [response]);
 
-  const escapeHtml = (value: string) =>
-    value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
-  const highlightLine = (line: string) => {
-    let highlighted = escapeHtml(line);
-    highlighted = highlighted.replace(/(\s*)"([^"]+)":/g, `$1<span class="json-key">"$2"</span>:`);
-    highlighted = highlighted.replace(/: "([^"]*)"(,?)/g, `: <span class="json-string">"$1"</span>$2`);
-    highlighted = highlighted.replace(/: (-?\d+(?:\.\d+)?)(,?)/g, `: <span class="json-number">$1</span>$2`);
-    highlighted = highlighted.replace(/: (true|false)(,?)/g, `: <span class="json-boolean">$1</span>$2`);
-    highlighted = highlighted.replace(/: null(,?)/g, `: <span class="json-null">null</span>$1`);
-    return highlighted;
-  };
-
   useEffect(() => {
     setCopyStatus("idle");
   }, [responseBody]);
@@ -74,7 +61,7 @@ const ResponseViewer = ({ response, isLoading, errorMessage }: ResponseViewerPro
     }
   };
 
-  const jsonLines = prettyBody ? prettyBody.split("\n") : ["[empty response body]"];
+  const displayValue = prettyBody || "[empty response body]";
 
   return (
     <section className="space-y-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6">
@@ -126,15 +113,12 @@ const ResponseViewer = ({ response, isLoading, errorMessage }: ResponseViewerPro
                 </button>
               </div>
               <div className="max-h-64 overflow-auto rounded-2xl border border-[var(--border)] bg-[var(--background)] p-3 text-xs text-[var(--text)]">
-                <pre className="response-body">
-                  {jsonLines.map((line, index) => (
-                    <div
-                      key={index}
-                      className="response-line"
-                      dangerouslySetInnerHTML={{ __html: highlightLine(line || "[empty response body]") }}
-                    />
-                  ))}
-                </pre>
+                <textarea
+                  readOnly
+                  value={displayValue}
+                  className="response-body h-full w-full resize-none bg-transparent font-mono text-[11px] leading-relaxed text-[var(--text)] focus:outline-none"
+                  rows={10}
+                />
               </div>
             </div>
           </div>
