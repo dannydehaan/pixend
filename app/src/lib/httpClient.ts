@@ -110,9 +110,9 @@ export async function sendRequest({
       signal,
     });
 
-    const headers = Object.fromEntries(fetchResult.headers.entries());
+    const responseHeaders = Object.fromEntries(fetchResult.headers.entries());
     const normalized: Record<string, string> = {};
-    Object.entries(headers).forEach(([key, value]) => {
+    Object.entries(responseHeaders).forEach(([key, value]) => {
       normalized[key.toLowerCase()] = value;
     });
     return {

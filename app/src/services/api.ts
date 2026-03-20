@@ -9,44 +9,7 @@ export const setApiBase = (value: string) => {
   apiBaseOverride = value;
 };
 
-const stripTrailingSlash = (value: string) => value.replace(/\/+$/, "");
-
-const isApiBaseAbsolute = (value: string) => {
-  return /^(?:[a-z]+:)?\/\//i.test(value);
-};
-
-const getDefaultEnvApiBase = () => stripTrailingSlash(import.meta.env.VITE_APP_API_BASE ?? "");
-
-const shouldUseBrowserFallback = (candidate: string) => {
-  return (
-    import.meta.env.DEV &&
-    isBrowser() &&
-    !isTauri() &&
-    candidate.length > 0 &&
-    isApiBaseAbsolute(candidate)
-  );
-};
-
-const getEnvApiBase = () => {
-  const configured = apiBaseOverride ?? import.meta.env.VITE_APP_API_BASE ?? "";
-  const trimmed = configured.trim();
-  if (!trimmed) {
-    throw new Error("Missing VITE_APP_API_BASE environment variable");
-  }
-  const normalized = stripTrailingSlash(trimmed);
-  if (shouldUseBrowserFallback(normalized)) {
-    const fallback = getDefaultEnvApiBase();
-    if (!fallback) {
-      throw new Error("Browser mode cannot use an absolute API base when no fallback is configured.");
-    }
-    console.warn(
-      `[apiClient] Detected absolute API base ${normalized} while running in browser dev mode; ` +
-        `falling back to ${fallback} so the dev proxy can be used. Remove the override if you need to call a remote server against CORS.`,
-    );
-    return fallback;
-  }
-  return normalized;
-};
+const getEnvApiBase = () => apiBaseOverride ?? import.meta.env.VITE_APP_API_BASE;
 const TOKEN_KEY = "pixend_token";
 
 const isBrowser = () => typeof window !== "undefined";
