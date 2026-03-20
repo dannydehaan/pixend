@@ -7,6 +7,28 @@ import ResponseViewer from "./ResponseViewer";
 import { TabPanel, Tabs } from "./Tabs";
 import { sendRequest, type HttpClientResult } from "../../lib/httpClient";
 import type { BodyType, HeaderEntry, HttpMethod, QueryParam, ResponsePayload } from "./types";
+import { useSettings } from "../../contexts/SettingsContext";
+import { addNetworkLog } from "../../services/networkLogs";
+import { PROXY_TARGET_HEADER, PROXY_URL, useNetworkProxy } from "../../hooks/useNetworkProxy";
+
+const DEFAULT_API_BASE = (import.meta.env.VITE_APP_API_BASE ?? "").replace(/\/+$/, "");
+
+const isAbsoluteUrl = (value: string) => /^(?:[a-z]+:)?\/\//i.test(value);
+const trimSlashes = (value: string) => value.replace(/\/+$/, "");
+const applyApiBaseToUrl = (value: string, base: string) => {
+  if (!value) return value;
+  if (isAbsoluteUrl(value)) return value;
+  if (!base) return value;
+
+  const normalizedBase = trimSlashes(base);
+  const normalizedValue = value.replace(/^\/+/, "");
+  return normalizedValue ? `${normalizedBase}/${normalizedValue}` : normalizedBase;
+};
+
+const generateLogId = () =>
+  typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
 const HTTP_METHODS: HttpMethod[] = ["GET", "POST", "PUT", "PATCH", "DELETE"];
 
@@ -126,6 +148,13 @@ const RequestBuilder = () => {
   const [isCodePanelOpen, setIsCodePanelOpen] = useState(false);
   const controllerRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef(0);
+  const { apiBase } = useSettings();
+  const { proxyEnabled } = useNetworkProxy();
+
+  const configuredApiBase = useMemo(() => {
+    const trimmed = (apiBase ?? "").trim();
+    return trimmed ? trimSlashes(trimmed) : DEFAULT_API_BASE;
+  }, [apiBase]);
 
   const showBodyEditor = useMemo(
     () => ["POST", "PUT", "PATCH"].includes(requestState.method),
@@ -148,10 +177,10 @@ const RequestBuilder = () => {
     [requestState.headers],
   );
 
-  const finalUrl = useMemo(
-    () => composeUrlWithParams(requestState.url, requestState.queryParams),
-    [requestState.url, requestState.queryParams],
-  );
+  const finalUrl = useMemo(() => {
+    const resolved = composeUrlWithParams(requestState.url, requestState.queryParams);
+    return applyApiBaseToUrl(resolved, configuredApiBase);
+  }, [requestState.url, requestState.queryParams, configuredApiBase]);
 
   const codeRequestPayload = useMemo(() => {
     const sanitizedBodyForCode =
@@ -242,20 +271,40 @@ const RequestBuilder = () => {
 
     try {
       const actualBodyType = requestState.method === "GET" ? "none" : requestState.bodyType;
+      const headersForRequest = proxyEnabled
+        ? { ...headersObject, [PROXY_TARGET_HEADER]: finalUrl }
+        : { ...headersObject };
+      const targetUrl = proxyEnabled ? PROXY_URL : finalUrl;
       const result: HttpClientResult = await sendRequest({
-        url: finalUrl,
+        url: targetUrl,
         method: requestState.method,
-        headers: headersObject,
+        headers: headersForRequest,
         bodyType: actualBodyType,
         body: actualBodyType === "json" ? sanitizedBody : undefined,
         signal: controller.signal,
       });
+
+      const baseLog = {
+        id: generateLogId(),
+        method: requestState.method,
+        originalUrl: finalUrl,
+        proxyUrl: targetUrl,
+        headers: { ...headersObject },
+        body: actualBodyType === "json" && sanitizedBody.trim() ? sanitizedBody : undefined,
+        duration: result.duration,
+        timestamp: Date.now(),
+      };
 
       if (requestIdRef.current !== requestId) {
         return;
       }
 
       if (result.error) {
+        addNetworkLog({
+          ...baseLog,
+          response: result.error.message,
+          status: result.response?.status,
+        });
         setIsSending(false);
         setSendError(result.error.message);
         setRequestState((prev) => ({ ...prev, response: undefined }));
@@ -264,6 +313,10 @@ const RequestBuilder = () => {
       }
 
       if (!result.response) {
+        addNetworkLog({
+          ...baseLog,
+          response: "Request cancelled",
+        });
         setIsSending(false);
         setSendError("Request cancelled");
         setRequestState((prev) => ({ ...prev, response: undefined }));
@@ -279,6 +332,12 @@ const RequestBuilder = () => {
 
       const responseBody = await response.text();
 
+      addNetworkLog({
+        ...baseLog,
+        response: responseBody,
+        status: response.status,
+      });
+
       setRequestState((prev) => ({
         ...prev,
         response: {
@@ -291,6 +350,16 @@ const RequestBuilder = () => {
       controllerRef.current = null;
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to execute request.";
+      addNetworkLog({
+        id: generateLogId(),
+        method: requestState.method,
+        originalUrl: finalUrl,
+        proxyUrl: proxyEnabled ? PROXY_URL : finalUrl,
+        headers: { ...headersObject },
+        duration: 0,
+        timestamp: Date.now(),
+        response: message,
+      });
       setSendError(message);
       setRequestState((prev) => ({ ...prev, response: undefined }));
       controllerRef.current = null;

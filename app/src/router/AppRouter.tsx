@@ -6,6 +6,7 @@ import { LoginScreen } from "../screens/Login/LoginScreen";
 import { RegisterScreen } from "../screens/Register/RegisterScreen";
 import { WorkspaceLayout } from "../layouts/WorkspaceLayout";
 import { ApiClientScreen } from "../screens/APIClient/APIClientScreen";
+import NetworkInspectorScreen from "../screens/Network/NetworkInspectorScreen";
 
 const ProtectedRoute = () => {
   const { user, status, isGuest } = useAuth();
@@ -38,6 +39,8 @@ export const AppRouter = () => (
         <Route index element={<CollectionsScreen />} />
         <Route path="collections" element={<CollectionsScreen />} />
         <Route path="api-client" element={<ApiClientScreen />} />
+        <Route path="network" element={<NetworkInspectorScreen />} />
+        <Route path="environments" element={<CollectionsScreen />} />
         <Route path="register" element={<RegisterScreen />} />
       </Route>
     </Route>

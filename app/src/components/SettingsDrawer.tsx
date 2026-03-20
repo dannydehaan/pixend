@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import ThemeSwitcher from "./theme/ThemeSwitcher";
 import { useSettings } from "../contexts/SettingsContext";
+import { useNetworkProxy } from "../hooks/useNetworkProxy";
 
 const SettingsDrawer = () => {
   const { isSettingsOpen, closeSettings } = useSettings();
+  const { isPaidUser, proxyEnabled, setProxyEnabled } = useNetworkProxy();
 
   if (!isSettingsOpen) {
     return null;
@@ -36,13 +38,24 @@ const SettingsDrawer = () => {
           <div className="space-y-4">
             <p className="text-[0.65rem] uppercase tracking-[0.4em] text-[var(--muted)]">API Proxy</p>
             <div className="space-y-2">
-              <label className="text-[0.65rem] uppercase tracking-[0.4em] text-[var(--muted)] block">API Base URL</label>
-              <ApiBaseField />
+              <label className="text-[0.65rem] uppercase tracking-[0.4em] text-[var(--muted)] block">
+                API Base URL
+              </label>
+              <ApiBaseField disabled={!isPaidUser} />
             </div>
             <div className="flex items-center justify-between text-xs uppercase tracking-[0.4em] text-[var(--muted)]">
               <span>Enable proxy</span>
-              <ProxyToggle />
+              <ProxyToggle
+                disabled={!isPaidUser}
+                active={proxyEnabled}
+                onToggle={(value) => setProxyEnabled(value)}
+              />
             </div>
+            {!isPaidUser && (
+              <p className="text-[10px] uppercase tracking-[0.3em] text-error/70">
+                Upgrade your plan to unlock the API proxy and network inspector.
+              </p>
+            )}
           </div>
         </section>
       </div>
@@ -50,7 +63,7 @@ const SettingsDrawer = () => {
   );
 };
 
-const ApiBaseField = () => {
+const ApiBaseField = ({ disabled }: { disabled: boolean }) => {
   const { apiBase, setApiBase } = useSettings();
   const [value, setValue] = useState(apiBase);
 
@@ -59,6 +72,7 @@ const ApiBaseField = () => {
   }, [apiBase]);
 
   const handleBlur = () => {
+    if (disabled) return;
     setApiBase(value);
   };
 
@@ -66,32 +80,43 @@ const ApiBaseField = () => {
     <input
       type="url"
       value={value}
+      disabled={disabled}
       onChange={(event) => setValue(event.target.value)}
       onBlur={handleBlur}
       placeholder="https://api.example.com"
-      className="w-full rounded-lg border border-outline-variant/40 px-3 py-2 text-sm bg-[var(--surface)] focus:border-primary focus:outline-none"
+      className={`w-full rounded-lg border border-outline-variant/40 px-3 py-2 text-sm bg-[var(--surface)] focus:border-primary focus:outline-none ${
+        disabled ? "opacity-60 cursor-not-allowed" : ""
+      }`}
     />
   );
 };
 
-const ProxyToggle = () => {
-  const { proxyEnabled, setProxyEnabled } = useSettings();
-
-  return (
-    <button
-      type="button"
-      onClick={() => setProxyEnabled(!proxyEnabled)}
-      className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none ${
-        proxyEnabled ? "bg-primary" : "bg-outline-variant/40"
+const ProxyToggle = ({
+  active,
+  onToggle,
+  disabled,
+}: {
+  active: boolean;
+  onToggle: (value: boolean) => void;
+  disabled?: boolean;
+}) => (
+  <button
+    type="button"
+    onClick={() => {
+      if (disabled) return;
+      onToggle(!active);
+    }}
+    className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none ${
+      active ? "bg-primary" : "bg-outline-variant/40"
+    } ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}
+    aria-pressed={active}
+  >
+    <span
+      className={`inline-block h-4 w-4 transform rounded-full bg-surface transition-transform ${
+        active ? "translate-x-5" : "translate-x-1"
       }`}
-    >
-      <span
-        className={`inline-block h-4 w-4 transform rounded-full bg-surface transition-transform ${
-          proxyEnabled ? "translate-x-5" : "translate-x-1"
-        }`}
-      />
-    </button>
-  );
-};
+    />
+  </button>
+);
 
 export default SettingsDrawer;

@@ -30,8 +30,8 @@ export async function sendRequest({
   if (hasJsonBody) {
     try {
       parsedBody = JSON.parse(body as string);
-    } catch (error) {
-      return { duration: Math.round(performance.now() - start), error: error instanceof Error ? error : new Error("Invalid JSON body") };
+    } catch {
+      throw new Error("Invalid JSON body");
     }
   }
 

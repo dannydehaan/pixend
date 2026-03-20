@@ -27,6 +27,12 @@ const primaryNavItems: PrimaryNavItem[] = [
     path: "/api-client",
     matches: (pathname: string) => pathname.startsWith("/api-client"),
   },
+  {
+    icon: "network_ping",
+    label: "Network",
+    path: "/network",
+    matches: (pathname: string) => pathname.startsWith("/network"),
+  },
 ];
 
 const utilityNavItems: UtilityNavItem[] = [
@@ -35,11 +41,13 @@ const utilityNavItems: UtilityNavItem[] = [
 ];
 
 export const WorkspaceLayout = () => {
-  const { isGuest } = useAuth();
+  const { isGuest, user } = useAuth();
+  const isPaidUser = Boolean(user?.is_premium);
   const navigate = useNavigate();
   const location = useLocation();
 
   const { openSettings } = useSettings();
+  const isEnvironmentsActive = location.pathname.startsWith("/environments");
 
   return (
     <div className="flex h-screen overflow-hidden bg-surface text-on-surface">
@@ -69,16 +77,24 @@ export const WorkspaceLayout = () => {
         <nav className="flex-1 px-3 space-y-1">
           {primaryNavItems.map((link) => {
             const isActive = link.matches(location.pathname);
+            const isLocked = link.path === "/network" && !isPaidUser;
             return (
               <button
                 key={link.label}
                 type="button"
-                onClick={() => navigate(link.path)}
+                onClick={() => {
+                  if (isLocked) {
+                    openSettings();
+                    return;
+                  }
+                  navigate(link.path);
+                }}
                 className={`flex items-center gap-3 px-3 py-3 rounded transition-all text-xs font-semibold uppercase tracking-widest ${
                   isActive
                     ? "bg-[var(--border)] text-[var(--primary)] border-r-2 border-[var(--primary)]"
                     : "text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--border)]/40"
-                }`}
+                } ${isLocked ? "opacity-60 cursor-not-allowed" : ""}`}
+                aria-disabled={isLocked}
               >
                 <span className="material-symbols-outlined text-[20px]">{link.icon}</span>
                 <span>{link.label}</span>
@@ -86,15 +102,27 @@ export const WorkspaceLayout = () => {
             );
           })}
           <div className="mt-2 space-y-1 border-t pt-3" style={{ borderColor: "var(--border)" }}>
-            {utilityNavItems.map((link) => (
-              <div
-                key={link.label}
-                className="flex items-center gap-3 px-3 py-3 rounded text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--border)]/40 transition-all cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-[20px]">{link.icon}</span>
-                <span className="text-xs font-semibold uppercase tracking-widest">{link.label}</span>
-              </div>
-            ))}
+            {utilityNavItems.map((link) => {
+              const isEnvironmentLink = link.label === "Environments";
+              const isActive = isEnvironmentLink && isEnvironmentsActive;
+              return (
+                <button
+                  type="button"
+                  key={link.label}
+                  onClick={() => {
+                    if (isEnvironmentLink) {
+                      navigate("/environments");
+                    }
+                  }}
+                  className={`flex items-center gap-3 px-3 py-3 rounded text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--border)]/40 transition-all ${
+                    isActive ? "border-l-2 border-primary text-[var(--primary)]" : ""
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[20px]">{link.icon}</span>
+                  <span className="text-xs font-semibold uppercase tracking-widest">{link.label}</span>
+                </button>
+              );
+            })}
           </div>
         </nav>
         {isGuest && (
