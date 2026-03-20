@@ -1,6 +1,7 @@
 import { Store } from "@tauri-apps/plugin-store";
 import { isGuestMode } from "./guestSession";
 import { addGuestCollection } from "./guestStorage";
+import type { ThemePalette } from "../lib/themePalettes";
 
 let apiBaseOverride: string | null = null;
 export const setApiBase = (value: string) => {
@@ -435,14 +436,28 @@ export const apiClient = {
     return response.body as { user: UserSummary };
   },
 
+  async fetchThemes() {
+    const response = await request<{ themes: ThemePalette[] }>("/themes", {
+      method: "GET",
+    }, {
+      auth: false,
+    });
+    return response.body?.themes ?? [];
+  },
+
+  async fetchUserTheme() {
+    const response = await request<{ theme: ThemePalette }>("/user/theme", {
+      method: "GET",
+    });
+    return response.body?.theme;
+  },
+
   async updateUserThemePreference(themeId: string) {
-    await request<void>(
-      "/user/theme",
-      {
-        method: "PATCH",
-        body: JSON.stringify({ theme: themeId }),
-      },
-    );
+    const response = await request<{ theme: ThemePalette }>("/user/theme", {
+      method: "PATCH",
+      body: JSON.stringify({ theme: themeId }),
+    });
+    return response.body?.theme;
   },
 };
 
