@@ -1,5 +1,6 @@
 mod network;
 mod network_service;
+mod secure_storage;
 mod speedtest;
 #[allow(dead_code)]
 mod throttle;
@@ -7,6 +8,10 @@ mod throttle;
 use network::{NetworkPreset, NetworkProfile, NetworkState, SharedNetworkState};
 use network_service::{send_network_request, NetworkRequest, NetworkResponse};
 use once_cell::sync::Lazy;
+use secure_storage::{
+    clear_account_impl, delete_secret_impl, list_secret_metadata_impl, reveal_secret_impl,
+    upsert_secret_impl,
+};
 use speedtest::{cancel_speedtest, run_speedtest};
 use std::{
     path::{Path, PathBuf},
@@ -92,6 +97,45 @@ fn list_network_presets() -> Vec<NetworkPreset> {
 }
 
 #[tauri::command]
+async fn list_secret_metadata_command(
+    account: secure_storage::AccountMode,
+) -> secure_storage::SecretStoreResult<Vec<secure_storage::SecretMetadata>> {
+    list_secret_metadata_impl(account).await
+}
+
+#[tauri::command]
+async fn reveal_secret_command(
+    account: secure_storage::AccountMode,
+    key: String,
+) -> secure_storage::SecretStoreResult<secure_storage::SecretValue> {
+    reveal_secret_impl(account, key).await
+}
+
+#[tauri::command]
+async fn upsert_secret_command(
+    account: secure_storage::AccountMode,
+    metadata: secure_storage::SecretMetadata,
+    value: Vec<u8>,
+) -> secure_storage::SecretStoreResult<secure_storage::SecretReference> {
+    upsert_secret_impl(account, metadata, value).await
+}
+
+#[tauri::command]
+async fn delete_secret_command(
+    account: secure_storage::AccountMode,
+    key: String,
+) -> secure_storage::SecretStoreResult<()> {
+    delete_secret_impl(account, key).await
+}
+
+#[tauri::command]
+async fn clear_account_command(
+    account: secure_storage::AccountMode,
+) -> secure_storage::SecretStoreResult<()> {
+    clear_account_impl(account).await
+}
+
+#[tauri::command]
 fn start_proxy() -> Result<bool, String> {
     let mut guard = PROXY_PROCESS
         .lock()
@@ -137,6 +181,11 @@ pub fn run() {
             run_speedtest_command,
             cancel_speedtest_command,
             send_network_request_command,
+            list_secret_metadata_command,
+            reveal_secret_command,
+            upsert_secret_command,
+            delete_secret_command,
+            clear_account_command,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
