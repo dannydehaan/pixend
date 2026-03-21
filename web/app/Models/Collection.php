@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Collection extends Model
 {
@@ -38,5 +39,10 @@ class Collection extends Model
     public function environments(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Environment::class);
+    }
+
+    public function variables(): MorphMany
+    {
+        return $this->morphMany(Variable::class, 'variableable');
     }
 }

@@ -11,17 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('environment_variables', function (Blueprint $table) {
+        Schema::create('variables', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('environment_id')->nullable()->constrained('environments')->cascadeOnDelete();
-            $table->foreignId('collection_id')->nullable()->constrained('collections')->cascadeOnDelete();
             $table->string('key');
             $table->text('encrypted_value');
-            $table->boolean('sensitive')->default(true);
-            $table->string('description')->nullable();
+            $table->string('variableable_type');
+            $table->unsignedBigInteger('variableable_id');
             $table->timestamps();
-            $table->unique(['environment_id', 'key']);
-            $table->index(['collection_id', 'key']);
+            $table->unique(['variableable_type', 'variableable_id', 'key']);
+            $table->index(['variableable_type', 'variableable_id']);
         });
     }
 
@@ -30,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('environment_variables');
+        Schema::dropIfExists('variables');
     }
 };
