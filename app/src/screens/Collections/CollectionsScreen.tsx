@@ -19,31 +19,12 @@ const formatRelativeUpdated = (timestamp?: string) => {
 const canCreateCollection = (isGuest: boolean, collectionsLength: number) => !isGuest || collectionsLength < 1;
 const canCreateEnvironment = (isGuest: boolean, totalEnvironments: number) => !isGuest || totalEnvironments < 1;
 
-const sampleCollection: PixCollection = {
-  name: "Authentication Kit",
-  requests: [
-    {
-      name: "Login",
-      method: "POST",
-      url: "https://api.pixend.io/v1/auth/login",
-      headers: { "Content-Type": "application/json" },
-      body: { type: "json", content: { identifier: "project-admin", password: "secret-pass" } },
-    },
-    {
-      name: "Fetch Profile",
-      method: "GET",
-      url: "https://api.pixend.io/v1/users/profile",
-      headers: { Authorization: "Bearer <token>" },
-    },
-  ],
-};
-
 export const CollectionsScreen = () => {
   const { status, isGuest, user } = useAuth();
   const { workspaces, loading, error, refresh } = useWorkspaces();
   const [isCreatingCollection, setIsCreatingCollection] = useState(false);
   const [activeCollection, setActiveCollection] = useState<Collection | null>(null);
-  const [customCollections, setCustomCollections] = useState<PixCollection[]>([sampleCollection]);
+  const [customCollections, setCustomCollections] = useState<PixCollection[]>([]);
   const [importMessage, setImportMessage] = useState<string | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -325,13 +306,6 @@ export const CollectionsScreen = () => {
                   className="px-4 py-2 rounded-md border border-[var(--border)] text-[var(--text)] text-xs font-semibold uppercase tracking-[0.3em] hover:bg-[var(--surface)] transition-all"
                 >
                   Import Collection
-                </button>
-                <button
-                  type="button"
-                  onClick={() => exportCollection(sampleCollection)}
-                  className="px-4 py-2 rounded-md border border-[var(--border)] text-[var(--text)] text-xs font-semibold uppercase tracking-[0.3em] hover:bg-[var(--surface)] transition-all"
-                >
-                  Export Sample
                 </button>
               </div>
             </div>
