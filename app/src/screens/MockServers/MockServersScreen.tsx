@@ -35,6 +35,21 @@ export const MockServersScreen = () => {
   const [requestsError, setRequestsError] = useState<string | null>(null);
   const [openRequestKeys, setOpenRequestKeys] = useState<Set<string>>(new Set());
 
+  const getRequestKey = (request: MockServerRequest) =>
+    `${request.timestamp}-${request.method}-${request.path}-${request.body ?? ""}`;
+
+  const toggleRequestKey = (key: string) => {
+    setOpenRequestKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  };
+
   const readRunningPorts = async () => {
     try {
       const running = await listRunningMockServers();
@@ -67,12 +82,56 @@ export const MockServersScreen = () => {
     refresh();
   }, []);
 
+  const mergeRequests = (
+    incoming: MockServerRequest[],
+    existing: MockServerRequest[]
+  ): { merged: MockServerRequest[]; reset: boolean } => {
+    if (!existing.length) {
+      return { merged: incoming, reset: false };
+    }
+
+    if (!incoming.length) {
+      return { merged: [], reset: true };
+    }
+
+    const existingMap = new Set(existing.map((req) => getRequestKey(req)));
+    const incomingFirstKey = getRequestKey(incoming[0]);
+    const existingFirstKey = getRequestKey(existing[0]);
+
+    if (incoming.length < existing.length || incomingFirstKey !== existingFirstKey) {
+      return { merged: incoming, reset: true };
+    }
+
+    const newEntries: MockServerRequest[] = [];
+    for (const request of incoming) {
+      const key = getRequestKey(request);
+      if (existingMap.has(key)) {
+        break;
+      }
+      newEntries.push(request);
+    }
+
+    if (!newEntries.length) {
+      return { merged: existing, reset: false };
+    }
+
+    return { merged: [...newEntries, ...existing], reset: false };
+  };
+
   const loadRequestsForPort = async (port: number) => {
     setRequestsLoading(true);
     setRequestsError(null);
     try {
       const result = await fetchMockServerRequests(port);
-      setMockRequests(result);
+      let shouldReset = false;
+      setMockRequests((prev) => {
+        const { merged, reset } = mergeRequests(result, prev);
+        shouldReset = reset;
+        return merged;
+      });
+      if (shouldReset) {
+        setOpenRequestKeys(new Set());
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unable to load mock server requests";
       setRequestsError(message);
@@ -137,21 +196,6 @@ export const MockServersScreen = () => {
   };
 
   const selectedServerName = servers.find((server) => server.port === selectedPort)?.name;
-
-  const getRequestKey = (request: MockServerRequest) =>
-    `${request.timestamp}-${request.method}-${request.path}-${request.body ?? ""}`;
-
-  const toggleRequestKey = (key: string) => {
-    setOpenRequestKeys((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
-        next.add(key);
-      }
-      return next;
-    });
-  };
 
   const handleCreateServer = async () => {
     if (!isPaidUser) {
