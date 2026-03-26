@@ -71,8 +71,7 @@ export const WorkspaceLayout = () => {
   return (
     <div className="flex h-screen overflow-hidden bg-surface text-on-surface">
       <aside
-        className="hidden md:flex flex-col h-full w-64 flex-shrink-0"
-        style={{ borderColor: "var(--border)", backgroundColor: "var(--surface)" }}
+        className="hidden md:flex flex-col h-full w-64 flex-shrink-0 border-r border-[var(--border)] bg-[var(--surface)]"
       >
         <div className="p-6 flex flex-col gap-1">
           <div className="flex items-center gap-3 mb-6">
@@ -93,25 +92,25 @@ export const WorkspaceLayout = () => {
             New Collection
           </button>
         </div>
-        <nav className="flex-1 px-3 space-y-1">
+        <nav className="flex-1 space-y-1">
           {primaryNavItems.map((link) => {
             const isActive = link.matches(location.pathname);
-            return (
+              return (
                 <button
                   key={link.label}
                   type="button"
                   onClick={() => handlePrimaryNavClick(link.path)}
-                className={`flex items-center gap-3 px-3 py-3 rounded transition-all text-xs font-semibold uppercase tracking-widest ${
-                  isActive
-                    ? "bg-[var(--border)] text-[var(--primary)] border-r-2 border-[var(--primary)]"
-                    : "text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--border)]/40"
-                }`}
-              >
-                <span className="material-symbols-outlined text-[20px]">{link.icon}</span>
-                <span>{link.label}</span>
-              </button>
-            );
-          })}
+                  className={`flex items-center gap-3 pl-3 pr-0 py-3 w-full text-left transition-all text-xs font-semibold uppercase tracking-widest ${
+                    isActive
+                      ? "bg-[var(--border)] text-[var(--primary)] border-r-2 border-[var(--primary)]"
+                      : "text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--border)]/40"
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[20px]">{link.icon}</span>
+                  <span>{link.label}</span>
+                </button>
+              );
+            })}
           <div className="mt-2 space-y-1 border-t pt-3" style={{ borderColor: "var(--border)" }}>
             {utilityNavItems.map((link) => {
               const isActive = link.matches(location.pathname);
@@ -120,8 +119,8 @@ export const WorkspaceLayout = () => {
                   type="button"
                   key={link.label}
                   onClick={() => handleUtilityClick(link.path)}
-                  className={`flex items-center gap-3 px-3 py-3 rounded text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--border)]/40 transition-all ${
-                    isActive ? "border-l-2 border-primary text-[var(--primary)]" : ""
+                  className={`flex items-center gap-3 pl-3 pr-0 py-3 w-full text-left transition-all text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--border)]/40 ${
+                    isActive ? "border-r-2 border-[var(--primary)] text-[var(--primary)]" : ""
                   }`}
                 >
                   <span className="material-symbols-outlined text-[20px]">{link.icon}</span>
