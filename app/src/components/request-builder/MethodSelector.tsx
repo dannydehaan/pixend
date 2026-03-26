@@ -12,9 +12,9 @@ const MethodSelector = ({ methods, value, onChange }: MethodSelectorProps) => {
   };
 
   return (
-    <div className="relative min-w-[100px]">
+    <div className="relative min-w-[100px] h-full">
       <select
-        className="appearance-none w-full bg-surface-container-high border-none rounded-lg py-3 pl-4 pr-10 text-xs font-black mono text-primary focus:ring-1 focus:ring-primary cursor-pointer"
+        className="appearance-none w-full h-full bg-surface-container-high border-none rounded-lg py-3 pl-4 pr-10 text-xs font-black mono text-primary focus:ring-1 focus:ring-primary cursor-pointer"
         value={value}
         onChange={handleChange}
       >
