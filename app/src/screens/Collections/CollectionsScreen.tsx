@@ -4,6 +4,7 @@ import { useWorkspaces } from "../../contexts/WorkspaceContext";
 import { Collection } from "../../services/api";
 import { CreateCollectionModal } from "./CreateCollectionModal";
 import { CreateEnvironmentModal } from "./CreateEnvironmentModal";
+import { CreateWorkspaceModal } from "./CreateWorkspaceModal";
 import {
   PixCollection,
   exportCollection,
@@ -23,6 +24,7 @@ export const CollectionsScreen = () => {
   const { status, isGuest, user } = useAuth();
   const { workspaces, loading, error, refresh } = useWorkspaces();
   const [isCreatingCollection, setIsCreatingCollection] = useState(false);
+  const [isCreatingWorkspace, setIsCreatingWorkspace] = useState(false);
   const [activeCollection, setActiveCollection] = useState<Collection | null>(null);
   const [customCollections, setCustomCollections] = useState<PixCollection[]>([]);
   const [importMessage, setImportMessage] = useState<string | null>(null);
@@ -170,6 +172,7 @@ export const CollectionsScreen = () => {
               <button
                 type="button"
                 disabled={workspaceLimitReached}
+                onClick={() => setIsCreatingWorkspace(true)}
                 className={`px-8 py-3 rounded-xl border flex items-center justify-center gap-2 font-semibold transition-all ${
                   workspaceLimitReached
                     ? "border-[#494454]/40 text-[#dae2fd]/50"
@@ -352,6 +355,14 @@ export const CollectionsScreen = () => {
           </p>
         )}
       </section>
+      <CreateWorkspaceModal
+        open={isCreatingWorkspace}
+        onClose={() => setIsCreatingWorkspace(false)}
+        onSuccess={() => {
+          setIsCreatingWorkspace(false);
+          void refresh();
+        }}
+      />
       <CreateCollectionModal
         open={isCreatingCollection}
         onClose={() => setIsCreatingCollection(false)}

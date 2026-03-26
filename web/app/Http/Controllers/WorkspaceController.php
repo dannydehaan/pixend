@@ -13,6 +13,7 @@ use App\Services\WorkspaceAccessService;
 use App\Services\WorkspaceSyncService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class WorkspaceController extends Controller
@@ -51,9 +52,18 @@ class WorkspaceController extends Controller
             }
         }
 
+        $baseSlug = Str::slug($payload['slug'] ?? $payload['name']);
+        $fallbackSlug = $baseSlug ?: (string) Str::uuid();
+        $slug = $fallbackSlug;
+        $counter = 1;
+        while (Workspace::where('slug', $slug)->exists()) {
+            $slug = $fallbackSlug . '-' . $counter;
+            $counter++;
+        }
+
         $workspaceData = [
             'name' => $payload['name'],
-            'slug' => $payload['slug'],
+            'slug' => $slug,
             'description' => $payload['description'] ?? null,
             'type' => $typeKey,
             'workspace_type_id' => $type->id,

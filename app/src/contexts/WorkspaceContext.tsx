@@ -7,8 +7,8 @@ import {
   useRef,
   useState,
 } from "react";
-import { apiClient, Workspace } from "../services/api";
-import { loadGuestWorkspace } from "../services/guestStorage";
+import type { Workspace } from "../services/api";
+import { workspaceService } from "../services/workspaceService";
 import { useAuth } from "./AuthContext";
 
 interface WorkspaceContextValue {
@@ -29,14 +29,18 @@ export const WorkspacesProvider = ({ children }: { children: React.ReactNode }) 
   const requestIdRef = useRef(0);
   const controllerRef = useRef<AbortController | null>(null);
 
-  const loadRemoteWorkspaces = useCallback(async () => {
-    if (!isAuthenticated) {
+  const loadWorkspaces = useCallback(async () => {
+    controllerRef.current?.abort();
+
+    if (!isGuest && !isAuthenticated) {
+      setWorkspaces([]);
+      setError(null);
+      setLoading(false);
       return;
     }
 
     requestIdRef.current += 1;
     const currentRequestId = requestIdRef.current;
-    controllerRef.current?.abort();
     const controller = new AbortController();
     controllerRef.current = controller;
 
@@ -44,7 +48,7 @@ export const WorkspacesProvider = ({ children }: { children: React.ReactNode }) 
     setError(null);
 
     try {
-      const payload = await apiClient.fetchWorkspaces({ signal: controller.signal });
+      const payload = await workspaceService.getWorkspaces({ signal: controller.signal });
       if (requestIdRef.current !== currentRequestId) {
         return;
       }
@@ -55,47 +59,18 @@ export const WorkspacesProvider = ({ children }: { children: React.ReactNode }) 
         return;
       }
 
+      if (requestIdRef.current !== currentRequestId) {
+        return;
+      }
+
       const message = err instanceof Error ? err.message : "Unable to load workspaces";
       setError(message);
     } finally {
-      if (requestIdRef.current === currentRequestId) {
+      if (controllerRef.current === controller && requestIdRef.current === currentRequestId) {
         setLoading(false);
       }
     }
-  }, [isAuthenticated]);
-
-  const loadLocalWorkspaces = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const workspace = await loadGuestWorkspace();
-      setWorkspaces([workspace]);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Unable to load guest workspace";
-      setError(message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const loadWorkspaces = useCallback(async () => {
-    controllerRef.current?.abort();
-
-    if (isGuest) {
-      await loadLocalWorkspaces();
-      return;
-    }
-
-    if (isAuthenticated) {
-      await loadRemoteWorkspaces();
-      return;
-    }
-
-    setWorkspaces([]);
-    setError(null);
-    setLoading(false);
-  }, [isGuest, isAuthenticated, loadLocalWorkspaces, loadRemoteWorkspaces]);
+  }, [isGuest, isAuthenticated]);
 
   const refresh = useCallback(() => loadWorkspaces(), [loadWorkspaces]);
 

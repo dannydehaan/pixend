@@ -341,6 +341,11 @@ export type CreateEnvironmentPayload = {
   settings?: Record<string, unknown>;
 };
 
+export type CreateWorkspacePayload = {
+  name: string;
+  description?: string;
+};
+
 export type AuthResponse = {
   user: UserSummary;
   token: string;
@@ -392,6 +397,17 @@ export const apiClient = {
       { signal: options?.signal },
     );
     return response.body?.data as Workspace[];
+  },
+
+  async createWorkspace(payload: CreateWorkspacePayload) {
+    const response = await request<{ data: Workspace }>(
+      "/workspaces",
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      },
+    );
+    return response.body?.data as Workspace;
   },
 
   async createCollection(payload: CreateCollectionPayload) {

@@ -41,12 +41,13 @@ const getGuestStore = async (): Promise<Store | null> => {
 };
 
 type GuestMeta = {
+  nextWorkspaceId: number;
   nextCollectionId: number;
   nextEnvironmentId: number;
 };
 
 type GuestPayload = {
-  workspace: Workspace;
+  workspaces: Workspace[];
   meta: GuestMeta;
 };
 
@@ -71,6 +72,7 @@ const defaultWorkspace: Workspace = {
 };
 
 const defaultMeta: GuestMeta = {
+  nextWorkspaceId: 2,
   nextCollectionId: 1,
   nextEnvironmentId: 1,
 };
@@ -81,7 +83,7 @@ const ensureCollections = (collections: Collection[] | undefined): Collection[] 
     environments: collection.environments ?? [],
   }));
 
-const createWorkspaceSnapshot = (workspace: Workspace): Workspace => ({
+const createWorkspaceSnapshot = (workspace: Partial<Workspace>): Workspace => ({
   ...defaultWorkspace,
   ...workspace,
   collections: ensureCollections(workspace.collections),
@@ -117,15 +119,18 @@ const writeFallback = (value: GuestPayload) => {
 };
 
 const ensurePayload = (payload?: GuestPayload): GuestPayload => {
-  const workspace = createWorkspaceSnapshot(payload?.workspace ?? defaultWorkspace);
-  const meta = payload?.meta ?? defaultMeta;
+  const workspaces = (payload?.workspaces ?? [defaultWorkspace]).map((workspace) =>
+    createWorkspaceSnapshot(workspace),
+  );
+  const meta: GuestMeta = {
+    nextWorkspaceId: Math.max(payload?.meta?.nextWorkspaceId ?? defaultMeta.nextWorkspaceId, 2),
+    nextCollectionId: Math.max(payload?.meta?.nextCollectionId ?? defaultMeta.nextCollectionId, 1),
+    nextEnvironmentId: Math.max(payload?.meta?.nextEnvironmentId ?? defaultMeta.nextEnvironmentId, 1),
+  };
 
   return {
-    workspace,
-    meta: {
-      nextCollectionId: Math.max(meta.nextCollectionId, 1),
-      nextEnvironmentId: Math.max(meta.nextEnvironmentId, 1),
-    },
+    workspaces,
+    meta,
   };
 };
 
@@ -150,9 +155,56 @@ const writeGuestData = async (payload: GuestPayload): Promise<void> => {
   writeFallback(payload);
 };
 
-export const loadGuestWorkspace = async (): Promise<Workspace> => {
+const normalizeSlug = (value: string): string =>
+  value
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+const generateUniqueSlug = (name: string, existing: Set<string>): string => {
+  const base = normalizeSlug(name) || "workspace";
+  let slug = base;
+  let counter = 1;
+  while (existing.has(slug)) {
+    slug = `${base}-${counter}`;
+    counter += 1;
+  }
+  return slug;
+};
+
+export const loadGuestWorkspaces = async (): Promise<Workspace[]> => {
   const data = await readGuestData();
-  return data.workspace;
+  return data.workspaces.map((workspace) => createWorkspaceSnapshot(workspace));
+};
+
+export const loadGuestWorkspace = async (): Promise<Workspace> => {
+  const workspaces = await loadGuestWorkspaces();
+  return workspaces[0];
+};
+
+export const createGuestWorkspace = async (options: {
+  name: string;
+  description?: string;
+}): Promise<Workspace> => {
+  const data = await readGuestData();
+  const existingSlugs = new Set(data.workspaces.map((workspace) => workspace.slug));
+  const workspace: Workspace = createWorkspaceSnapshot({
+    id: data.meta.nextWorkspaceId,
+    name: options.name.trim(),
+    slug: generateUniqueSlug(options.name.trim(), existingSlugs),
+    description: options.description ?? null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    collections: [],
+  });
+
+  data.workspaces = [...data.workspaces, workspace];
+  data.meta.nextWorkspaceId += 1;
+
+  await writeGuestData(data);
+  return workspace;
 };
 
 export const addGuestCollection = async (options: {
@@ -161,10 +213,12 @@ export const addGuestCollection = async (options: {
   description?: string;
 }): Promise<Collection> => {
   const data = await readGuestData();
-  if (data.workspace.id !== options.workspaceId) {
-    throw new Error("Workspace does not match guest workspace");
+  const workspaceIndex = data.workspaces.findIndex((workspace) => workspace.id === options.workspaceId);
+  if (workspaceIndex === -1) {
+    throw new Error("Workspace not found");
   }
 
+  const workspace = data.workspaces[workspaceIndex];
   const collection: Collection = {
     id: data.meta.nextCollectionId,
     workspace_id: options.workspaceId,
@@ -178,8 +232,15 @@ export const addGuestCollection = async (options: {
   };
 
   data.meta.nextCollectionId += 1;
-  data.workspace.collections = [...(data.workspace.collections ?? []), collection];
-  data.workspace.updated_at = new Date().toISOString();
+  const updatedWorkspace = {
+    ...workspace,
+    collections: [...(workspace.collections ?? []), collection],
+    updated_at: new Date().toISOString(),
+  };
+
+  data.workspaces = data.workspaces.map((value, index) =>
+    index === workspaceIndex ? updatedWorkspace : value,
+  );
 
   await writeGuestData(data);
   return collection;
@@ -193,12 +254,20 @@ export const addGuestEnvironment = async (options: {
   settings?: Record<string, unknown>;
 }): Promise<Environment> => {
   const data = await readGuestData();
-  const collection = (data.workspace.collections ?? []).find((item) => item.id === options.collectionId);
-
-  if (!collection) {
+  const workspaceIndex = data.workspaces.findIndex((workspace) =>
+    (workspace.collections ?? []).some((collection) => collection.id === options.collectionId),
+  );
+  if (workspaceIndex === -1) {
     throw new Error("Collection not found");
   }
 
+  const workspace = data.workspaces[workspaceIndex];
+  const collectionIndex = (workspace.collections ?? []).findIndex((collection) => collection.id === options.collectionId);
+  if (collectionIndex === -1) {
+    throw new Error("Collection not found");
+  }
+
+  const collection = workspace.collections![collectionIndex];
   const environment: Environment = {
     id: data.meta.nextEnvironmentId,
     collection_id: collection.id,
@@ -210,8 +279,22 @@ export const addGuestEnvironment = async (options: {
   };
 
   data.meta.nextEnvironmentId += 1;
-  collection.environments = [...(collection.environments ?? []), environment];
-  data.workspace.updated_at = new Date().toISOString();
+  const updatedCollection = {
+    ...collection,
+    environments: [...(collection.environments ?? []), environment],
+  };
+
+  const updatedCollections = [...(workspace.collections ?? [])];
+  updatedCollections[collectionIndex] = updatedCollection;
+  const updatedWorkspace = {
+    ...workspace,
+    collections: updatedCollections,
+    updated_at: new Date().toISOString(),
+  };
+
+  data.workspaces = data.workspaces.map((value, index) =>
+    index === workspaceIndex ? updatedWorkspace : value,
+  );
 
   await writeGuestData(data);
   return environment;
