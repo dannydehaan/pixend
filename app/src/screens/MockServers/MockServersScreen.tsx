@@ -14,6 +14,82 @@ import {
   stopMockServer,
 } from "../../services/mockServerService";
 
+const areHeadersEqual = (
+  previous: Record<string, string>,
+  next: Record<string, string>
+): boolean => {
+  const previousKeys = Object.keys(previous);
+  if (previousKeys.length !== Object.keys(next).length) {
+    return false;
+  }
+  return previousKeys.every((key) => previous[key] === next[key]);
+};
+
+const areRequestsEqual = (previous: MockServerRequest, next: MockServerRequest): boolean => {
+  if (previous.method !== next.method) {
+    return false;
+  }
+  if (previous.path !== next.path) {
+    return false;
+  }
+  if (previous.body !== next.body) {
+    return false;
+  }
+  if (previous.timestamp !== next.timestamp) {
+    return false;
+  }
+  return areHeadersEqual(previous.headers, next.headers);
+};
+
+const mergeRequestCollections = (
+  incoming: MockServerRequest[],
+  existing: MockServerRequest[]
+): { merged: MockServerRequest[]; reset: boolean } => {
+  if (!incoming.length) {
+    return { merged: [], reset: existing.length > 0 };
+  }
+
+  if (!existing.length) {
+    return { merged: incoming, reset: false };
+  }
+
+  if (incoming.length < existing.length) {
+    return { merged: incoming, reset: true };
+  }
+
+  const incomingIds = new Set(incoming.map((request) => request.id));
+  if (existing.some((request) => !incomingIds.has(request.id))) {
+    return { merged: incoming, reset: true };
+  }
+
+  const existingById = new Map(existing.map((request) => [request.id, request]));
+  const newEntries: MockServerRequest[] = [];
+  let hasChanges = false;
+
+  for (const request of incoming) {
+    const previousRequest = existingById.get(request.id);
+    if (!previousRequest) {
+      newEntries.push(request);
+      hasChanges = true;
+      continue;
+    }
+
+    if (!areRequestsEqual(previousRequest, request)) {
+      existingById.set(request.id, { ...previousRequest, ...request });
+      hasChanges = true;
+    }
+  }
+
+  if (!hasChanges) {
+    return { merged: existing, reset: false };
+  }
+
+  const orderedExisting = existing.map((request) => existingById.get(request.id) ?? request);
+  return { merged: [...newEntries, ...orderedExisting], reset: false };
+};
+
+const getRequestKey = (request: MockServerRequest) => request.id;
+
 type FormState = {
   name: string;
   port: string;
@@ -34,9 +110,6 @@ export const MockServersScreen = () => {
   const [requestsLoading, setRequestsLoading] = useState(false);
   const [requestsError, setRequestsError] = useState<string | null>(null);
   const [openRequestKeys, setOpenRequestKeys] = useState<Set<string>>(new Set());
-
-  const getRequestKey = (request: MockServerRequest) =>
-    `${request.timestamp}-${request.method}-${request.path}-${request.body ?? ""}`;
 
   const toggleRequestKey = (key: string) => {
     setOpenRequestKeys((prev) => {
@@ -82,42 +155,6 @@ export const MockServersScreen = () => {
     refresh();
   }, []);
 
-  const mergeRequests = (
-    incoming: MockServerRequest[],
-    existing: MockServerRequest[]
-  ): { merged: MockServerRequest[]; reset: boolean } => {
-    if (!existing.length) {
-      return { merged: incoming, reset: false };
-    }
-
-    if (!incoming.length) {
-      return { merged: [], reset: true };
-    }
-
-    const existingMap = new Set(existing.map((req) => getRequestKey(req)));
-    const incomingFirstKey = getRequestKey(incoming[0]);
-    const existingFirstKey = getRequestKey(existing[0]);
-
-    if (incoming.length < existing.length || incomingFirstKey !== existingFirstKey) {
-      return { merged: incoming, reset: true };
-    }
-
-    const newEntries: MockServerRequest[] = [];
-    for (const request of incoming) {
-      const key = getRequestKey(request);
-      if (existingMap.has(key)) {
-        break;
-      }
-      newEntries.push(request);
-    }
-
-    if (!newEntries.length) {
-      return { merged: existing, reset: false };
-    }
-
-    return { merged: [...newEntries, ...existing], reset: false };
-  };
-
   const loadRequestsForPort = async (port: number) => {
     setRequestsLoading(true);
     setRequestsError(null);
@@ -125,7 +162,7 @@ export const MockServersScreen = () => {
       const result = await fetchMockServerRequests(port);
       let shouldReset = false;
       setMockRequests((prev) => {
-        const { merged, reset } = mergeRequests(result, prev);
+        const { merged, reset } = mergeRequestCollections(result, prev);
         shouldReset = reset;
         return merged;
       });

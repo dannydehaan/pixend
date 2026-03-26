@@ -62,17 +62,33 @@ export const listRunningMockServers = async (): Promise<number[]> => {
   return (result as number[]) ?? [];
 };
 
-export type MockServerRequest = {
+export type MockServerRequestDto = {
   method: string;
   path: string;
   headers: Record<string, string>;
   body?: string | null;
   timestamp: number;
+  id?: string;
+};
+
+export type MockServerRequest = Omit<MockServerRequestDto, "id"> & {
+  id: string;
+};
+
+const deriveRequestId = (request: MockServerRequestDto): string => {
+  return (
+    request.id ??
+    `${request.timestamp}-${request.method}-${request.path}-${request.body ?? ""}`
+  );
 };
 
 export const fetchMockServerRequests = async (port: number): Promise<MockServerRequest[]> => {
   const result = await invoke("fetch_mock_server_requests", { port });
-  return (result as MockServerRequest[]) ?? [];
+  const payload = (result as MockServerRequestDto[]) ?? [];
+  return payload.map((request) => ({
+    ...request,
+    id: deriveRequestId(request),
+  }));
 };
 
 export const clearMockServerRequests = async (port: number): Promise<boolean> => {
