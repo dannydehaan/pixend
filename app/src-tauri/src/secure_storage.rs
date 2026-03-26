@@ -1,4 +1,4 @@
-use aes_gcm::aead::{Aead, KeyInit, OsRng};
+use aes_gcm::aead::{Aead, AeadCore, KeyInit, OsRng};
 use aes_gcm::{Aes256Gcm, Key, Nonce};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
@@ -9,7 +9,8 @@ use std::collections::HashMap;
 use std::fmt;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use tauri::api::path::app_config_dir;
+use dirs::config_dir;
+use rand_core::RngCore;
 use tokio::fs;
 use tokio::io::AsyncWriteExt;
 use tokio::sync::Mutex;
@@ -35,7 +36,7 @@ pub struct SecretMetadata {
 }
 
 /// Represents a reference to an encrypted secret blob stored on disk.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SecretReference {
     pub key: String,
     pub version: u64,
@@ -43,6 +44,7 @@ pub struct SecretReference {
 }
 
 /// Value returned when a secret is revealed. The bytes are kept opaque to avoid accidental logging.
+#[derive(Clone, Serialize, Deserialize)]
 pub struct SecretValue(pub Vec<u8>);
 
 impl fmt::Debug for SecretValue {
@@ -91,17 +93,17 @@ pub struct GuestSecretStore {
 
 impl GuestSecretStore {
     pub async fn new() -> SecretStoreResult<Self> {
-        let mut base_dir = app_config_dir()
-            .ok_or_else(|| SecretStoreError::Backend("Failed to resolve app config dir".into()))?;
+        let mut base_dir = config_dir()
+            .ok_or_else(|| SecretStoreError::Backend("Failed to resolve config dir".into()))?;
         base_dir.push("pixend");
         base_dir.push("secure-secrets");
         base_dir.push("guest");
         fs::create_dir_all(&base_dir)
             .await
-            .map_err(|err| SecretStoreError::Backend(err.to_string()))?;
+            .map_err(|err: std::io::Error| SecretStoreError::Backend(err.to_string()))?;
 
         let master_key_bytes = Self::load_or_generate_key(&base_dir).await?;
-        let master_key = Key::from_slice(&master_key_bytes);
+        let master_key = Key::<Aes256Gcm>::from_slice(&master_key_bytes);
         let metadata = Self::load_metadata(&base_dir).await?;
 
         Ok(Self {
@@ -293,8 +295,8 @@ async fn guest_store() -> SecretStoreResult<Arc<GuestSecretStore>> {
     Ok(store)
 }
 
-fn require_guest_mode(account: AccountMode) -> SecretStoreResult<()> {
-    if account == AccountMode::Guest {
+fn require_guest_mode(account: &AccountMode) -> SecretStoreResult<()> {
+    if *account == AccountMode::Guest {
         Ok(())
     } else {
         Err(SecretStoreError::AccessDenied)
@@ -304,16 +306,16 @@ fn require_guest_mode(account: AccountMode) -> SecretStoreResult<()> {
 pub async fn list_secret_metadata_impl(
     account: AccountMode,
 ) -> SecretStoreResult<Vec<SecretMetadata>> {
-    require_guest_mode(account)?;
-    guest_store().await?.list_metadata(account).await
+    require_guest_mode(&account)?;
+    guest_store().await?.list_metadata(account.clone()).await
 }
 
 pub async fn reveal_secret_impl(
     account: AccountMode,
     key: String,
 ) -> SecretStoreResult<SecretValue> {
-    require_guest_mode(account)?;
-    guest_store().await?.read_secret(account, &key).await
+    require_guest_mode(&account)?;
+    guest_store().await?.read_secret(account.clone(), &key).await
 }
 
 pub async fn upsert_secret_impl(
@@ -321,19 +323,19 @@ pub async fn upsert_secret_impl(
     metadata: SecretMetadata,
     value: Vec<u8>,
 ) -> SecretStoreResult<SecretReference> {
-    require_guest_mode(account)?;
+    require_guest_mode(&account)?;
     guest_store()
         .await?
-        .write_secret(account, metadata, &value)
+        .write_secret(account.clone(), metadata, &value)
         .await
 }
 
 pub async fn delete_secret_impl(account: AccountMode, key: String) -> SecretStoreResult<()> {
-    require_guest_mode(account)?;
-    guest_store().await?.delete_secret(account, &key).await
+    require_guest_mode(&account)?;
+    guest_store().await?.delete_secret(account.clone(), &key).await
 }
 
 pub async fn clear_account_impl(account: AccountMode) -> SecretStoreResult<()> {
-    require_guest_mode(account)?;
-    guest_store().await?.clear_account(account).await
+    require_guest_mode(&account)?;
+    guest_store().await?.clear_account(account.clone()).await
 }

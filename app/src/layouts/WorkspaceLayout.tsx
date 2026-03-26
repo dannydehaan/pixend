@@ -12,6 +12,8 @@ type PrimaryNavItem = {
 type UtilityNavItem = {
   icon: string;
   label: string;
+  path: string;
+  matches: (pathname: string) => boolean;
 };
 
 const primaryNavItems: PrimaryNavItem[] = [
@@ -36,8 +38,18 @@ const primaryNavItems: PrimaryNavItem[] = [
 ];
 
 const utilityNavItems: UtilityNavItem[] = [
-  { icon: "cloud_queue", label: "Environments" },
-  { icon: "dns", label: "Mock Servers" },
+  {
+    icon: "cloud_queue",
+    label: "Environments",
+    path: "/environments",
+    matches: (pathname: string) => pathname.startsWith("/environments"),
+  },
+  {
+    icon: "dns",
+    label: "Mock Servers",
+    path: "/mock-servers",
+    matches: (pathname: string) => pathname.startsWith("/mock-servers"),
+  },
 ];
 
 export const WorkspaceLayout = () => {
@@ -47,8 +59,11 @@ export const WorkspaceLayout = () => {
   const location = useLocation();
 
   const { openSettings, closeSettings } = useSettings();
-  const isEnvironmentsActive = location.pathname.startsWith("/environments");
   const handlePrimaryNavClick = (path: string) => {
+    closeSettings();
+    navigate(path);
+  };
+  const handleUtilityClick = (path: string) => {
     closeSettings();
     navigate(path);
   };
@@ -99,17 +114,12 @@ export const WorkspaceLayout = () => {
           })}
           <div className="mt-2 space-y-1 border-t pt-3" style={{ borderColor: "var(--border)" }}>
             {utilityNavItems.map((link) => {
-              const isEnvironmentLink = link.label === "Environments";
-              const isActive = isEnvironmentLink && isEnvironmentsActive;
+              const isActive = link.matches(location.pathname);
               return (
                 <button
                   type="button"
                   key={link.label}
-                  onClick={() => {
-                    if (isEnvironmentLink) {
-                      navigate("/environments");
-                    }
-                  }}
+                  onClick={() => handleUtilityClick(link.path)}
                   className={`flex items-center gap-3 px-3 py-3 rounded text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--border)]/40 transition-all ${
                     isActive ? "border-l-2 border-primary text-[var(--primary)]" : ""
                   }`}

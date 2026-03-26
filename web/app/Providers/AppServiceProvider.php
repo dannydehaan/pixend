@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Models\Collection;
+use App\Models\Variable;
 use App\Policies\CollectionPolicy;
+use App\Policies\VariablePolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -23,5 +25,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Gate::policy(Collection::class, CollectionPolicy::class);
+        Gate::policy(Variable::class, VariablePolicy::class);
     }
 }

@@ -79,6 +79,8 @@ class VariableController extends Controller
 
     public function reveal(Variable $variable)
     {
+        $this->authorize('viewSensitiveValue', $variable);
+
         return response()->json(['data' => ['id' => $variable->id, 'value' => $variable->encrypted_value]]);
     }
 

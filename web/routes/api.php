@@ -4,25 +4,26 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\CollectionOverviewController;
 use App\Http\Controllers\EnvironmentController;
+use App\Http\Controllers\MockServerController;
 use App\Http\Controllers\RequestController;
-use App\Http\Controllers\VariableController;
 use App\Http\Controllers\SecureEnvironmentController;
 use App\Http\Controllers\ThemeController;
 use App\Http\Controllers\UserThemeController;
+use App\Http\Controllers\VariableController;
 use App\Http\Controllers\WorkspaceController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-    Route::prefix('1.0')->group(function () {
-        Route::post('auth/register', [AuthController::class, 'register']);
-        Route::post('auth/login', [AuthController::class, 'login']);
-        Route::get('ping', function () {
-            return ['pong' => true];
-        });
+Route::prefix('1.0')->group(function () {
+    Route::post('auth/register', [AuthController::class, 'register']);
+    Route::post('auth/login', [AuthController::class, 'login']);
+    Route::get('ping', function () {
+        return ['pong' => true];
+    });
 
-        Route::get('themes', [ThemeController::class, 'index']);
+    Route::get('themes', [ThemeController::class, 'index']);
 
-        Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware('auth:sanctum')->group(function () {
         Route::get('auth/me', [AuthController::class, 'me']);
         Route::get('status', function (Request $request) {
             return [
@@ -51,5 +52,9 @@ use Illuminate\Support\Facades\Route;
         Route::get('user/theme', [UserThemeController::class, 'show']);
         Route::patch('user/theme', [UserThemeController::class, 'update']);
         Route::post('auth/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+        Route::get('mock-servers', [MockServerController::class, 'index']);
+        Route::post('mock-servers', [MockServerController::class, 'store']);
+        Route::put('mock-servers/{mock_server}', [MockServerController::class, 'update']);
+        Route::delete('mock-servers/{mock_server}', [MockServerController::class, 'destroy']);
     });
 });

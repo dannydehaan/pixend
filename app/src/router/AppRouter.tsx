@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { CollectionsScreen } from "../screens/Collections/CollectionsScreen";
 import { LoginScreen } from "../screens/Login/LoginScreen";
+import { MockServersScreen } from "../screens/MockServers/MockServersScreen";
 import { RegisterScreen } from "../screens/Register/RegisterScreen";
 import { WorkspaceLayout } from "../layouts/WorkspaceLayout";
 import { ApiClientScreen } from "../screens/APIClient/APIClientScreen";
@@ -36,14 +37,15 @@ export const AppRouter = () => (
   <Routes>
     <Route path="/login" element={<LoginScreen />} />
     <Route element={<ProtectedRoute />}>
-      <Route element={<WorkspaceLayout />}>
-        <Route index element={<CollectionsScreen />} />
-        <Route path="collections" element={<CollectionsScreen />} />
-        <Route path="api-client" element={<ApiClientScreen />} />
-        <Route path="network" element={<NetworkInspectorScreen />} />
-        <Route path="environments" element={<EnvironmentsScreen />} />
-        <Route path="register" element={<RegisterScreen />} />
-      </Route>
+        <Route element={<WorkspaceLayout />}>
+          <Route index element={<CollectionsScreen />} />
+          <Route path="collections" element={<CollectionsScreen />} />
+          <Route path="api-client" element={<ApiClientScreen />} />
+          <Route path="network" element={<NetworkInspectorScreen />} />
+          <Route path="environments" element={<EnvironmentsScreen />} />
+          <Route path="mock-servers" element={<MockServersScreen />} />
+          <Route path="register" element={<RegisterScreen />} />
+        </Route>
     </Route>
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>

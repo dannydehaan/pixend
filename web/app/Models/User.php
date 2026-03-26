@@ -7,12 +7,13 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use App\Models\Workspace;
 
-#[Fillable(['name', 'email', 'password', 'encryption_salt', 'preferred_theme'])]
+#[Fillable(['name', 'email', 'password', 'encryption_salt', 'preferred_theme', 'is_premium'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -32,18 +33,23 @@ class User extends Authenticatable
         ];
     }
 
-    public function workspaces(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function workspaces(): BelongsToMany
     {
         return $this->belongsToMany(Workspace::class);
     }
 
-    public function ownedWorkspaces(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function ownedWorkspaces(): HasMany
     {
         return $this->hasMany(Workspace::class, 'owner_id');
     }
 
-    public function organizations(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function organizations(): BelongsToMany
     {
         return $this->belongsToMany(Organization::class);
+    }
+
+    public function mockServers(): HasMany
+    {
+        return $this->hasMany(MockServer::class);
     }
 }
