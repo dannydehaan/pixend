@@ -11,16 +11,16 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 
 function App() {
   useEffect(() => {
-    const enforceFullscreen = async () => {
+    const enforceMaximize = async () => {
       try {
         const win = getCurrentWindow();
-        await win.setFullscreen(true);
+        await win.maximize();
       } catch {
         // ignore when running in a browser without the Tauri API
       }
     };
 
-    enforceFullscreen();
+    enforceMaximize();
   }, []);
 
   return (

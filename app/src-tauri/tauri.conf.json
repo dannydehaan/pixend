@@ -13,7 +13,7 @@
     "windows": [
       {
         "title": "Pixend",
-        "fullscreen": true
+        "maximized": true
       }
     ],
     "security": {
