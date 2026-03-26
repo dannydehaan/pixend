@@ -1,24 +1,10 @@
+import { ensurePixendClient } from "../lib/tauriClient";
+
 type TauriInvokeFn = (command: string, args?: Record<string, unknown>) => Promise<unknown>;
 
-const isTauriContext = () => typeof window !== "undefined" && typeof (window as any).__TAURI__ !== "undefined";
-
-const getTauriInvoke = (): TauriInvokeFn | null => {
-  if (!isTauriContext()) {
-    return null;
-  }
-  const tauri = (window as any).__TAURI__;
-  if (typeof tauri?.invoke !== "function") {
-    return null;
-  }
-  return tauri.invoke.bind(tauri);
-};
-
 const ensureInvoke = (): TauriInvokeFn => {
-  const invoke = getTauriInvoke();
-  if (!invoke) {
-    throw new Error("Network limiter is only available inside the Pixend client.");
-  }
-  return invoke;
+  const tauri = ensurePixendClient();
+  return tauri.invoke.bind(tauri);
 };
 
 const normalizeError = (error: unknown): Error => {
