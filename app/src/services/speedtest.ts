@@ -16,14 +16,7 @@ type EventPayloads = {
 type EventName = keyof EventPayloads;
 
 const invokeSpeedtestCommand = async <T>(cmd: string, payload?: Record<string, unknown>): Promise<T> => {
-  const tauri = (window as Window & {
-    __TAURI__?: {
-      invoke: (args: { cmd: string; payload?: Record<string, unknown> }) => Promise<unknown>;
-    };
-  }).__TAURI__;
-  if (!tauri) {
-    throw new Error('Speedtest is only available inside the Pixend client.');
-  }
+  const tauri = ensurePixendClient();
   const response = await tauri.invoke({ cmd, payload });
   return response as T;
 };
